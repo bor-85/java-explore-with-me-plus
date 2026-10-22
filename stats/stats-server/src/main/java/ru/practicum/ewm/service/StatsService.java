@@ -1,18 +1,17 @@
 package ru.practicum.ewm.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 import ru.practicum.dto.EndpointHitDto;
 import ru.practicum.dto.ViewStatsDto;
 import ru.practicum.ewm.model.Hit;
 import ru.practicum.ewm.repository.HitRepository;
 
 import java.time.LocalDateTime;
-import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -37,34 +36,20 @@ public class StatsService {
                                        LocalDateTime end,
                                        List<String> uris,
                                        boolean unique) {
+        if (start.isAfter(end)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST);
+        }
 
-        List<Hit> hits = (uris == null || uris.isEmpty())
-                ? hitRepository.findAllByTimestampBetween(start, end)
-                : hitRepository.findAllByTimestampBetweenAndUriIn(start, end, uris);
+        boolean hasUris = uris != null && !uris.isEmpty();
 
-        Map<StatsKey, List<Hit>> grouped = hits.stream()
-                .collect(Collectors.groupingBy(hit -> new StatsKey(hit.getApp(), hit.getUri())));
-
-        return grouped.entrySet().stream()
-                .map(entry -> {
-                    StatsKey key = entry.getKey();
-                    List<Hit> groupHits = entry.getValue();
-
-                    long count = unique
-                            ? groupHits.stream()
-                            .map(Hit::getIp)
-                            .distinct()
-                            .count()
-                            : groupHits.size();
-
-                    return new ViewStatsDto(key.app(), key.uri(), count);
-                })
-                .sorted(Comparator.comparing(ViewStatsDto::hits).reversed()
-                        .thenComparing(ViewStatsDto::app)
-                        .thenComparing(ViewStatsDto::uri))
-                .toList();
-    }
-
-    private record StatsKey(String app, String uri) {
+        if (unique) {
+            return hasUris
+                    ? hitRepository.findUniqueStatsByUris(start, end, uris)
+                    : hitRepository.findUniqueStats(start, end);
+        } else {
+            return hasUris
+                    ? hitRepository.findStatsByUris(start, end, uris)
+                    : hitRepository.findStats(start, end);
+        }
     }
 }
