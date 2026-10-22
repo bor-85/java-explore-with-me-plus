@@ -9,8 +9,8 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import ru.practicum.dto.EndpointHitDto;
 import ru.practicum.dto.ViewStatsDto;
-import ru.practicum.ewm.service.StatsService;
 import ru.practicum.ewm.controller.StatsController;
+import ru.practicum.ewm.service.StatsService;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -22,7 +22,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(StatsController.class)
@@ -36,14 +36,8 @@ class StatsControllerTest {
 
     @Test
     void hitReturns201AndDelegatesToService() throws Exception {
-        String body = """
-                {
-                  "app": "ewm-main-service",
-                  "uri": "/events/1",
-                  "ip": "192.163.0.1",
-                  "timestamp": "2026-10-22 12:00:00"
-                }
-                """;
+        String body = "{\"app\":\"ewm-main-service\",\"uri\":\"/events/1\","
+                + "\"ip\":\"192.163.0.1\",\"timestamp\":\"2026-10-22 12:00:00\"}";
 
         mockMvc.perform(post("/hit")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -76,14 +70,9 @@ class StatsControllerTest {
                         .param("uris", "/events/2")
                         .param("unique", "true"))
                 .andExpect(status().isOk())
-                .andExpect(content().json("""
-                        [
-                          {
-                            "app": "ewm-main-service",
-                            "uri": "/events/1",
-                            "hits": 6
-                          }
-                        ]
-                        """));
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].app").value("ewm-main-service"))
+                .andExpect(jsonPath("$[0].uri").value("/events/1"))
+                .andExpect(jsonPath("$[0].hits").value(6));
     }
 }
