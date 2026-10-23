@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestClient;
+import ru.practicum.client.exception.StatsClientException;
 import ru.practicum.dto.EndpointHitDto;
 import ru.practicum.dto.ViewStatsDto;
 
@@ -14,6 +15,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.content;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
@@ -75,12 +77,14 @@ class StatClientTest {
     }
 
     @Test
-    void getStatsReturnsEmptyListOnServerError() {
+    void getStatsThrowsExceptionOnServerError() {
         server.expect(requestTo("http://stats:9090/stats?start=2020-05-05%2000:00:00&end=2035-05-05%2000:00:00"
                         + "&unique=false"))
                 .andRespond(withServerError());
 
-        assertTrue(client.getStats(START, END, List.of(), false).isEmpty());
+        assertThrows(StatsClientException.class, () ->
+                client.getStats(START, END, null, false));
+
         server.verify();
     }
 }
