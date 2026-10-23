@@ -8,9 +8,9 @@ services:
       stats-db:
         condition: service_healthy
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://stats-db:5432/stats
-      - SPRING_DATASOURCE_USERNAME=stats
-      - SPRING_DATASOURCE_PASSWORD=stats
+      SPRING_DATASOURCE_URL: jdbc:postgresql://stats-db:5432/stats
+      SPRING_DATASOURCE_USERNAME: stats
+      SPRING_DATASOURCE_PASSWORD: stats
 
   stats-db:
     image: postgres:16.1
@@ -24,6 +24,8 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+    ports:
+      - "5433:5432"
 
   ewm-service:
     build: main-service
