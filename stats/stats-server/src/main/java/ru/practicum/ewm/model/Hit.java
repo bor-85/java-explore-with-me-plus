@@ -20,7 +20,7 @@ public class Hit {
     @Column(nullable = false)
     private String app;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 1024)
     private String uri;
 
     @Column(nullable = false)

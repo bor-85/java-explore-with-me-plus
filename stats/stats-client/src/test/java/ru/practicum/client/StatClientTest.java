@@ -44,7 +44,7 @@ class StatClientTest {
                         + "\"ip\":\"192.163.0.1\",\"timestamp\":\"2022-09-06 11:00:23\"}"))
                 .andRespond(withStatus(HttpStatus.CREATED));
 
-        client.hit(new EndpointHitDto(null, "ewm-main-service", "/events/1", "192.163.0.1",
+        client.hit(new EndpointHitDto("ewm-main-service", "/events/1", "192.163.0.1",
                 LocalDateTime.of(2022, 9, 6, 11, 0, 23)));
 
         server.verify();

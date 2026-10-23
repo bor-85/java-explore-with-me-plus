@@ -27,7 +27,6 @@ class StatsValidationTest {
     void endpointHitDtoShouldNotAllowNullApp() {
         EndpointHitDto dto = new EndpointHitDto(
                 null,
-                null,
                 "/events/1",
                 "192.163.0.1",
                 LocalDateTime.now()
@@ -44,7 +43,6 @@ class StatsValidationTest {
     @Test
     void endpointHitDtoShouldNotAllowBlankApp() {
         EndpointHitDto dto = new EndpointHitDto(
-                null,
                 "   ",
                 "/events/1",
                 "192.163.0.1",
@@ -62,7 +60,6 @@ class StatsValidationTest {
     @Test
     void endpointHitDtoShouldNotAllowBlankUri() {
         EndpointHitDto dto = new EndpointHitDto(
-                null,
                 "ewm-main-service",
                 "   ",
                 "192.163.0.1",
@@ -80,7 +77,6 @@ class StatsValidationTest {
     @Test
     void endpointHitDtoShouldNotAllowBlankIp() {
         EndpointHitDto dto = new EndpointHitDto(
-                null,
                 "ewm-main-service",
                 "/events/1",
                 "   ",
@@ -98,7 +94,6 @@ class StatsValidationTest {
     @Test
     void endpointHitDtoShouldNotAllowNullTimestamp() {
         EndpointHitDto dto = new EndpointHitDto(
-                null,
                 "ewm-main-service",
                 "/events/1",
                 "192.163.0.1",

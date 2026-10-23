@@ -7,7 +7,6 @@ import jakarta.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 
 public record EndpointHitDto(
-        Long id,
         @NotBlank String app,
         @NotBlank String uri,
         @NotBlank String ip,

@@ -34,7 +34,6 @@ class StatsServiceTest {
     @Test
     void saveHitSavesEntityToRepository() {
         EndpointHitDto dto = new EndpointHitDto(
-                null,
                 "ewm-main-service",
                 "/events/1",
                 "192.163.0.1",

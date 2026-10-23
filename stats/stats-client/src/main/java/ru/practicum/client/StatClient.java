@@ -7,6 +7,7 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
+import ru.practicum.client.exception.StatsClientException;
 import ru.practicum.dto.EndpointHitDto;
 import ru.practicum.dto.ViewStatsDto;
 
@@ -17,7 +18,8 @@ import java.util.List;
 @Component
 public class StatClient {
     private static final Logger log = LoggerFactory.getLogger(StatClient.class);
-    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern(EndpointHitDto.DATE_TIME_PATTERN);
+    private static final DateTimeFormatter FORMATTER =
+            DateTimeFormatter.ofPattern(EndpointHitDto.DATE_TIME_PATTERN);
 
     private final RestClient restClient;
 
@@ -38,7 +40,8 @@ public class StatClient {
         }
     }
 
-    public List<ViewStatsDto> getStats(LocalDateTime start, LocalDateTime end, List<String> uris, boolean unique) {
+    public List<ViewStatsDto> getStats(LocalDateTime start, LocalDateTime end,
+                                       List<String> uris, boolean unique) {
         try {
             List<ViewStatsDto> stats = restClient.get()
                     .uri(builder -> {
@@ -54,10 +57,10 @@ public class StatClient {
                     .retrieve()
                     .body(new ParameterizedTypeReference<>() {
                     });
-            return stats == null ? List.of() : stats;
+
+            return stats;
         } catch (RestClientException e) {
-            log.warn("Failed to get stats: {}", e.getMessage());
-            return List.of();
+            throw new StatsClientException("Failed to get stats from stats-server", e);
         }
     }
 }
