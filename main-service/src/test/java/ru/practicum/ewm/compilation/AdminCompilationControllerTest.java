@@ -84,6 +84,20 @@ class AdminCompilationControllerTest {
     }
 
     @Test
+    void createCompilationReturnsNotFoundWhenEventMissing() throws Exception {
+        when(compilationService.createCompilation(any()))
+                .thenThrow(new NotFoundException("Event with id=99 was not found"));
+
+        mockMvc.perform(post("/admin/compilations")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"events\":[99],\"pinned\":false,\"title\":\"Summer\"}"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value("NOT_FOUND"))
+                .andExpect(jsonPath("$.reason").value("The required object was not found."))
+                .andExpect(jsonPath("$.message").value("Event with id=99 was not found"));
+    }
+
+    @Test
     void updateCompilationReturnsUpdatedCompilation() throws Exception {
         when(compilationService.updateCompilation(eq(1L), any()))
                 .thenReturn(new CompilationDto(1L, true, "Updated", List.of()));
@@ -101,6 +115,32 @@ class AdminCompilationControllerTest {
     }
 
     @Test
+    void updateCompilationReturnsBadRequestWhenTitleBlank() throws Exception {
+        mockMvc.perform(patch("/admin/compilations/{compId}", 1L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"title\":\"\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value("BAD_REQUEST"))
+                .andExpect(jsonPath("$.reason").value("Incorrectly made request."));
+
+        verifyNoInteractions(compilationService);
+    }
+
+    @Test
+    void updateCompilationReturnsBadRequestWhenTitleTooLong() throws Exception {
+        String longTitle = "a".repeat(51);
+
+        mockMvc.perform(patch("/admin/compilations/{compId}", 1L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"title\":\"%s\"}".formatted(longTitle)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.status").value("BAD_REQUEST"))
+                .andExpect(jsonPath("$.reason").value("Incorrectly made request."));
+
+        verifyNoInteractions(compilationService);
+    }
+
+    @Test
     void updateCompilationReturnsNotFoundWhenCompilationMissing() throws Exception {
         doThrow(new NotFoundException("Compilation with id=1 was not found"))
                 .when(compilationService).updateCompilation(eq(1L), any());
@@ -112,6 +152,20 @@ class AdminCompilationControllerTest {
                 .andExpect(jsonPath("$.status").value("NOT_FOUND"))
                 .andExpect(jsonPath("$.reason").value("The required object was not found."))
                 .andExpect(jsonPath("$.message").value("Compilation with id=1 was not found"));
+    }
+
+    @Test
+    void updateCompilationReturnsNotFoundWhenEventMissing() throws Exception {
+        doThrow(new NotFoundException("Event with id=99 was not found"))
+                .when(compilationService).updateCompilation(eq(1L), any());
+
+        mockMvc.perform(patch("/admin/compilations/{compId}", 1L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"events\":[99],\"pinned\":true,\"title\":\"Updated\"}"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value("NOT_FOUND"))
+                .andExpect(jsonPath("$.reason").value("The required object was not found."))
+                .andExpect(jsonPath("$.message").value("Event with id=99 was not found"));
     }
 
     @Test
