@@ -1,0 +1,81 @@
+package ru.practicum.ewm.mapper.event;
+
+import ru.practicum.ewm.dto.category.CategoryDto;
+import ru.practicum.ewm.dto.event.EventFullDto;
+import ru.practicum.ewm.dto.event.EventShortDto;
+import ru.practicum.ewm.dto.event.Location;
+import ru.practicum.ewm.dto.event.NewEventDto;
+import ru.practicum.ewm.dto.user.UserShortDto;
+import ru.practicum.ewm.model.Category;
+import ru.practicum.ewm.model.event.Event;
+import ru.practicum.ewm.model.event.EventState;
+import ru.practicum.ewm.model.User;
+
+import java.time.LocalDateTime;
+
+public final class EventMapper {
+
+    private EventMapper() {
+    }
+
+    public static Event toEvent(NewEventDto dto, User initiator, Category category) {
+        Event event = new Event();
+        event.setAnnotation(dto.annotation());
+        event.setCategory(category);
+        event.setDescription(dto.description());
+        event.setEventDate(dto.eventDate());
+        event.setInitiator(initiator);
+        event.setLat(dto.location().lat());
+        event.setLon(dto.location().lon());
+        event.setPaid(dto.paid() != null ? dto.paid() : false);
+        event.setParticipantLimit(dto.participantLimit() != null ? dto.participantLimit() : 0);
+        event.setRequestModeration(dto.requestModeration() != null ? dto.requestModeration() : true);
+        event.setState(EventState.PENDING);
+        event.setTitle(dto.title());
+        event.setCreatedOn(LocalDateTime.now());
+        return event;
+    }
+
+    public static EventFullDto toFullDto(Event event) {
+        return new EventFullDto(
+                event.getId(),
+                event.getAnnotation(),
+                toCategoryDto(event.getCategory()),
+                0L,
+                event.getCreatedOn(),
+                event.getDescription(),
+                event.getEventDate(),
+                toUserShortDto(event.getInitiator()),
+                new Location(event.getLat(), event.getLon()),
+                event.getPaid(),
+                event.getParticipantLimit(),
+                event.getPublishedOn(),
+                event.getRequestModeration(),
+                event.getState().name(),
+                event.getTitle(),
+                0L
+        );
+    }
+
+    public static EventShortDto toShortDto(Event event) {
+        return new EventShortDto(
+                event.getId(),
+                event.getAnnotation(),
+                toCategoryDto(event.getCategory()),
+                0L,
+                event.getEventDate(),
+                toUserShortDto(event.getInitiator()),
+                event.getPaid(),
+                event.getTitle(),
+                0L
+        );
+    }
+
+    private static CategoryDto toCategoryDto(Category category) {
+        return new CategoryDto(category.getId(), category.getName());
+    }
+
+    private static UserShortDto toUserShortDto(User user) {
+        return new UserShortDto(user.getId(), user.getName());
+    }
+}
