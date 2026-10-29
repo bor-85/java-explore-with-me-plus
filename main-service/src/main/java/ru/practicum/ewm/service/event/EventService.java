@@ -1,4 +1,4 @@
-package ru.practicum.ewm.service;
+package ru.practicum.ewm.service.event;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -8,14 +8,16 @@ import ru.practicum.ewm.dto.event.EventShortDto;
 import ru.practicum.ewm.dto.event.NewEventDto;
 import ru.practicum.ewm.dto.event.UpdateEventUserRequest;
 import ru.practicum.ewm.exception.ConflictException;
+import ru.practicum.ewm.exception.ErrorMessages;
 import ru.practicum.ewm.exception.NotFoundException;
-import ru.practicum.ewm.mapper.EventMapper;
+import ru.practicum.ewm.exception.ValidationException;
+import ru.practicum.ewm.mapper.event.EventMapper;
 import ru.practicum.ewm.model.Category;
-import ru.practicum.ewm.model.Event;
-import ru.practicum.ewm.model.EventState;
+import ru.practicum.ewm.model.event.Event;
+import ru.practicum.ewm.model.event.EventState;
 import ru.practicum.ewm.model.User;
 import ru.practicum.ewm.repository.CategoryRepository;
-import ru.practicum.ewm.repository.EventRepository;
+import ru.practicum.ewm.repository.event.EventRepository;
 import ru.practicum.ewm.repository.UserRepository;
 
 import java.time.LocalDateTime;
@@ -35,7 +37,7 @@ public class EventService {
     @Transactional
     public EventFullDto createEvent(Long userId, NewEventDto dto) {
         User initiator = userRepository.findById(userId)
-                .orElseThrow(() -> new NotFoundException("User with id=" + userId + " was not found"));
+                .orElseThrow(() -> new NotFoundException(ErrorMessages.USER_NOT_FOUND.formatted(userId)));
         Category category = getCategory(dto.category());
         checkEventDate(dto.eventDate());
 
@@ -59,7 +61,7 @@ public class EventService {
         Event event = getUserEventEntity(userId, eventId);
 
         if (event.getState() == EventState.PUBLISHED) {
-            throw new ConflictException("Only pending or canceled events can be changed");
+            throw new ConflictException(ErrorMessages.EVENT_NOT_EDITABLE);
         }
         if (dto.eventDate() != null) {
             checkEventDate(dto.eventDate());
@@ -101,18 +103,18 @@ public class EventService {
 
     private Event getUserEventEntity(Long userId, Long eventId) {
         return eventRepository.findByIdAndInitiatorId(eventId, userId)
-                .orElseThrow(() -> new NotFoundException("Event with id=" + eventId + " was not found"));
+                .orElseThrow(() -> new NotFoundException(ErrorMessages.EVENT_NOT_FOUND.formatted(eventId)));
     }
 
     private Category getCategory(Long categoryId) {
         return categoryRepository.findById(categoryId)
-                .orElseThrow(() -> new NotFoundException("Category with id=" + categoryId + " was not found"));
+                .orElseThrow(() -> new NotFoundException(ErrorMessages.CATEGORY_NOT_FOUND.formatted(categoryId)));
     }
 
     private void checkEventDate(LocalDateTime eventDate) {
         if (eventDate.isBefore(LocalDateTime.now().plusHours(MIN_HOURS_BEFORE_EVENT))) {
-            throw new IllegalArgumentException(
-                    "Event date must be at least " + MIN_HOURS_BEFORE_EVENT + " hours from now: " + eventDate);
+            throw new ValidationException(
+                    ErrorMessages.EVENT_DATE_TOO_EARLY.formatted(MIN_HOURS_BEFORE_EVENT, eventDate));
         }
     }
 }

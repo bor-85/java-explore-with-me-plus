@@ -1,4 +1,4 @@
-package ru.practicum.ewm.mapper;
+package ru.practicum.ewm.mapper.event;
 
 import ru.practicum.ewm.dto.category.CategoryDto;
 import ru.practicum.ewm.dto.event.EventFullDto;
@@ -7,8 +7,8 @@ import ru.practicum.ewm.dto.event.Location;
 import ru.practicum.ewm.dto.event.NewEventDto;
 import ru.practicum.ewm.dto.user.UserShortDto;
 import ru.practicum.ewm.model.Category;
-import ru.practicum.ewm.model.Event;
-import ru.practicum.ewm.model.EventState;
+import ru.practicum.ewm.model.event.Event;
+import ru.practicum.ewm.model.event.EventState;
 import ru.practicum.ewm.model.User;
 
 import java.time.LocalDateTime;

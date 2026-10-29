@@ -86,7 +86,8 @@ public class RestExceptionHandler {
     @ExceptionHandler({
             MethodArgumentTypeMismatchException.class,
             MissingServletRequestParameterException.class,
-            IllegalArgumentException.class
+            IllegalArgumentException.class,
+            ValidationException.class
     })
     public ResponseEntity<ApiError> handleBadRequest(Exception ex) {
         return buildError(

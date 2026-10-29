@@ -10,14 +10,15 @@ import ru.practicum.ewm.dto.event.Location;
 import ru.practicum.ewm.dto.event.NewEventDto;
 import ru.practicum.ewm.dto.event.UpdateEventUserRequest;
 import ru.practicum.ewm.exception.ConflictException;
+import ru.practicum.ewm.exception.ValidationException;
 import ru.practicum.ewm.model.Category;
-import ru.practicum.ewm.model.Event;
-import ru.practicum.ewm.model.EventState;
+import ru.practicum.ewm.model.event.Event;
+import ru.practicum.ewm.model.event.EventState;
 import ru.practicum.ewm.model.User;
 import ru.practicum.ewm.repository.CategoryRepository;
-import ru.practicum.ewm.repository.EventRepository;
+import ru.practicum.ewm.repository.event.EventRepository;
 import ru.practicum.ewm.repository.UserRepository;
-import ru.practicum.ewm.service.EventService;
+import ru.practicum.ewm.service.event.EventService;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -47,11 +48,11 @@ class EventServiceTest {
     @Test
     void createEventThrowsWhenEventDateEarlierThanTwoHours() {
         NewEventDto dto = newEventDto(LocalDateTime.now().plusHours(1));
-        when(userRepository.findById(1L)).thenReturn(Optional.of(new User(1L, "user", "user@mail.ru")));
-        when(categoryRepository.findById(1L)).thenReturn(Optional.of(new Category(1L, "concerts")));
+        when(userRepository.findById(1L)).thenReturn(Optional.of(new User(1L, "Пользователь", "user@mail.ru")));
+        when(categoryRepository.findById(1L)).thenReturn(Optional.of(new Category(1L, "Концерты")));
 
         assertThatThrownBy(() -> eventService.createEvent(1L, dto))
-                .isInstanceOf(IllegalArgumentException.class);
+                .isInstanceOf(ValidationException.class);
         verify(eventRepository, never()).save(any());
     }
 
@@ -72,42 +73,42 @@ class EventServiceTest {
         EventFullDto result = eventService.updateUserEvent(1L, 1L, updateRequest("CANCEL_REVIEW"));
 
         assertThat(result.state()).isEqualTo("CANCELED");
-        assertThat(result.title()).isEqualTo("New title");
+        assertThat(result.title()).isEqualTo("Новое название");
     }
 
     private NewEventDto newEventDto(LocalDateTime eventDate) {
         return new NewEventDto(
-                "Annotation of the test event",
+                "Аннотация тестового события",
                 1L,
-                "Description of the test event",
+                "Описание тестового события",
                 eventDate,
                 new Location(55.75, 37.62),
                 null,
                 null,
                 null,
-                "Title"
+                "Название"
         );
     }
 
     private UpdateEventUserRequest updateRequest(String stateAction) {
-        return new UpdateEventUserRequest(null, null, null, null, null, null, null, null, stateAction, "New title");
+        return new UpdateEventUserRequest(null, null, null, null, null, null, null, null, stateAction, "Новое название");
     }
 
     private Event event(EventState state) {
         Event event = new Event();
         event.setId(1L);
-        event.setAnnotation("Annotation of the test event");
-        event.setCategory(new Category(1L, "concerts"));
-        event.setDescription("Description of the test event");
+        event.setAnnotation("Аннотация тестового события");
+        event.setCategory(new Category(1L, "Концерты"));
+        event.setDescription("Описание тестового события");
         event.setEventDate(LocalDateTime.now().plusDays(1));
-        event.setInitiator(new User(1L, "user", "user@mail.ru"));
+        event.setInitiator(new User(1L, "Пользователь", "user@mail.ru"));
         event.setLat(55.75);
         event.setLon(37.62);
         event.setPaid(false);
         event.setParticipantLimit(0);
         event.setRequestModeration(true);
         event.setState(state);
-        event.setTitle("Title");
+        event.setTitle("Название");
         event.setCreatedOn(LocalDateTime.now());
         return event;
     }

@@ -1,4 +1,4 @@
-package ru.practicum.ewm.controller;
+package ru.practicum.ewm.controller.event;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
@@ -11,7 +11,7 @@ import ru.practicum.ewm.dto.event.EventFullDto;
 import ru.practicum.ewm.dto.event.EventShortDto;
 import ru.practicum.ewm.dto.event.NewEventDto;
 import ru.practicum.ewm.dto.event.UpdateEventUserRequest;
-import ru.practicum.ewm.service.EventService;
+import ru.practicum.ewm.service.event.EventService;
 
 import java.util.List;
 
