@@ -7,7 +7,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import ru.practicum.ewm.controller.compilation.CompilationAdminController;
+import ru.practicum.ewm.controller.compilation.AdminCompilationController;
 import ru.practicum.ewm.dto.compilation.CompilationDto;
 import ru.practicum.ewm.exception.ConflictException;
 import ru.practicum.ewm.exception.NotFoundException;
@@ -29,9 +29,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(CompilationAdminController.class)
+@WebMvcTest(AdminCompilationController.class)
 @Import(RestExceptionHandler.class)
-class CompilationAdminControllerTest {
+class AdminCompilationControllerTest {
     @Autowired
     private MockMvc mockMvc;
 

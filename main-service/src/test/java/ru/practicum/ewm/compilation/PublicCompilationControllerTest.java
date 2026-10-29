@@ -6,7 +6,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.web.servlet.MockMvc;
-import ru.practicum.ewm.controller.compilation.CompilationPublicController;
+import ru.practicum.ewm.controller.compilation.PublicCompilationController;
 import ru.practicum.ewm.dto.compilation.CompilationDto;
 import ru.practicum.ewm.exception.NotFoundException;
 import ru.practicum.ewm.exception.RestExceptionHandler;
@@ -23,9 +23,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(CompilationPublicController.class)
+@WebMvcTest(PublicCompilationController.class)
 @Import(RestExceptionHandler.class)
-class CompilationPublicControllerTest {
+class PublicCompilationControllerTest {
     @Autowired
     private MockMvc mockMvc;
 

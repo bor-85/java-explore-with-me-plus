@@ -19,7 +19,7 @@ import ru.practicum.ewm.service.compilation.CompilationService;
 @RestController
 @RequestMapping("/admin/compilations")
 @RequiredArgsConstructor
-public class CompilationAdminController {
+public class AdminCompilationController {
     private final CompilationService compilationService;
 
     @PostMapping
