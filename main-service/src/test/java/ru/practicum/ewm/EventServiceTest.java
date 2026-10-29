@@ -49,8 +49,8 @@ class EventServiceTest {
     @Test
     void createEventThrowsWhenEventDateEarlierThanTwoHours() {
         NewEventDto dto = newEventDto(LocalDateTime.now().plusHours(1));
-        when(userRepository.findById(1L)).thenReturn(Optional.of(new User(1L, "Пользователь", "user@mail.ru")));
-        when(categoryRepository.findById(1L)).thenReturn(Optional.of(new Category(1L, "Концерты")));
+        when(userRepository.findById(1L)).thenReturn(Optional.of(new User(1L, "user", "user@mail.ru")));
+        when(categoryRepository.findById(1L)).thenReturn(Optional.of(new Category(1L, "concerts")));
 
         assertThatThrownBy(() -> eventService.createEvent(1L, dto))
                 .isInstanceOf(ValidationException.class);
@@ -74,7 +74,7 @@ class EventServiceTest {
         EventFullDto result = eventService.updateUserEvent(1L, 1L, updateRequest("CANCEL_REVIEW"));
 
         assertThat(result.state()).isEqualTo("CANCELED");
-        assertThat(result.title()).isEqualTo("Новое название");
+        assertThat(result.title()).isEqualTo("New title");
     }
 
     @Test
@@ -122,37 +122,37 @@ class EventServiceTest {
 
     private NewEventDto newEventDto(LocalDateTime eventDate) {
         return new NewEventDto(
-                "Аннотация тестового события",
+                "Annotation of the test event",
                 1L,
-                "Описание тестового события",
+                "Description of the test event",
                 eventDate,
                 new Location(55.75, 37.62),
                 null,
                 null,
                 null,
-                "Название"
+                "Title"
         );
     }
 
     private UpdateEventUserRequest updateRequest(String stateAction) {
-        return new UpdateEventUserRequest(null, null, null, null, null, null, null, null, stateAction, "Новое название");
+        return new UpdateEventUserRequest(null, null, null, null, null, null, null, null, stateAction, "New title");
     }
 
     private Event event(EventState state) {
         Event event = new Event();
         event.setId(1L);
-        event.setAnnotation("Аннотация тестового события");
-        event.setCategory(new Category(1L, "Концерты"));
-        event.setDescription("Описание тестового события");
+        event.setAnnotation("Annotation of the test event");
+        event.setCategory(new Category(1L, "concerts"));
+        event.setDescription("Description of the test event");
         event.setEventDate(LocalDateTime.now().plusDays(1));
-        event.setInitiator(new User(1L, "Пользователь", "user@mail.ru"));
+        event.setInitiator(new User(1L, "user", "user@mail.ru"));
         event.setLat(55.75);
         event.setLon(37.62);
         event.setPaid(false);
         event.setParticipantLimit(0);
         event.setRequestModeration(true);
         event.setState(state);
-        event.setTitle("Название");
+        event.setTitle("Title");
         event.setCreatedOn(LocalDateTime.now());
         return event;
     }
