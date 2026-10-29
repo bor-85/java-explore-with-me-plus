@@ -18,7 +18,7 @@ import ru.practicum.ewm.model.event.EventState;
 import ru.practicum.ewm.model.User;
 import ru.practicum.ewm.repository.CategoryRepository;
 import ru.practicum.ewm.repository.event.EventRepository;
-import ru.practicum.ewm.repository.UserRepository;
+import ru.practicum.ewm.repository.user.UserRepository;
 import ru.practicum.ewm.service.event.EventService;
 
 import java.time.LocalDateTime;
@@ -30,6 +30,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
 
 @ExtendWith(MockitoExtension.class)
 class EventServiceTest {
