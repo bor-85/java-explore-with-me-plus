@@ -1,4 +1,4 @@
-package ru.practicum.ewm.model;
+package ru.practicum.ewm.model.category;
 
 import jakarta.persistence.*;
 import lombok.*;

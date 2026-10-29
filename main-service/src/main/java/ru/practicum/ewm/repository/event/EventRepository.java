@@ -73,4 +73,6 @@ public interface EventRepository extends JpaRepository<Event, Long> {
     List<Object[]> countConfirmedRequests(@Param("eventIds") Collection<Long> eventIds);
 
     Optional<Event> findByIdAndInitiatorId(Long id, Long initiatorId);
+
+    boolean existsByCategory_Id(Long categoryId);
 }
