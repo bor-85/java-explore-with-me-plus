@@ -7,7 +7,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import ru.practicum.ewm.controller.category.CategoryAdminController;
+import ru.practicum.ewm.controller.category.AdminCategoryController;
 import ru.practicum.ewm.dto.category.CategoryDto;
 import ru.practicum.ewm.exception.ConflictException;
 import ru.practicum.ewm.exception.NotFoundException;
@@ -16,17 +16,16 @@ import ru.practicum.ewm.service.category.CategoryService;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(CategoryAdminController.class)
+@WebMvcTest(AdminCategoryController.class)
 @Import(RestExceptionHandler.class)
-class CategoryAdminControllerTest {
+class AdminCategoryControllerTest {
     @Autowired
     private MockMvc mockMvc;
 
@@ -89,5 +88,31 @@ class CategoryAdminControllerTest {
                 .andExpect(jsonPath("$.status").value("NOT_FOUND"))
                 .andExpect(jsonPath("$.reason").value("The required object was not found."))
                 .andExpect(jsonPath("$.message").value("Category with id=1 was not found"));
+    }
+
+    @Test
+    void patchCategoryReturnsBadRequestWhenNameIsBlank() throws Exception {
+        mockMvc.perform(patch("/admin/categories/{catId}", 1L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                            {"name": ""}
+                            """))
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(categoryService);
+    }
+
+    @Test
+    void patchCategoryReturnsBadRequestWhenNameIsTooLong() throws Exception {
+        String longName = "a".repeat(51);
+
+        mockMvc.perform(patch("/admin/categories/{catId}", 1L)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                            {"name": "%s"}
+                            """.formatted(longName)))
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(categoryService);
     }
 }

@@ -17,7 +17,4 @@ public class CategoryMapper {
         return category;
     }
 
-    public void update(Category category, String name) {
-        category.setName(name);
-    }
 }

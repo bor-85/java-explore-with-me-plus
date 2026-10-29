@@ -23,4 +23,6 @@ public interface EventRepository extends JpaRepository<Event, Long> {
                                      @Param("size") int size);
 
     Optional<Event> findByIdAndInitiatorId(Long id, Long initiatorId);
+
+    boolean existsByCategory_Id(Long categoryId);
 }

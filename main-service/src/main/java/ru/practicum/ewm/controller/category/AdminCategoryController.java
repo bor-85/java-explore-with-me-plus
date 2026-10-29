@@ -18,7 +18,7 @@ import ru.practicum.ewm.service.category.CategoryService;
 @RestController
 @RequestMapping("/admin/categories")
 @RequiredArgsConstructor
-public class CategoryAdminController {
+public class AdminCategoryController {
     private final CategoryService categoryService;
 
     @PostMapping
