@@ -13,12 +13,12 @@ import ru.practicum.ewm.exception.NotFoundException;
 import ru.practicum.ewm.exception.ValidationException;
 import ru.practicum.ewm.mapper.event.EventMapper;
 import ru.practicum.ewm.model.Category;
+import ru.practicum.ewm.model.User;
 import ru.practicum.ewm.model.event.Event;
 import ru.practicum.ewm.model.event.EventState;
-import ru.practicum.ewm.model.User;
 import ru.practicum.ewm.repository.CategoryRepository;
 import ru.practicum.ewm.repository.event.EventRepository;
-import ru.practicum.ewm.repository.UserRepository;
+import ru.practicum.ewm.repository.user.UserRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;
