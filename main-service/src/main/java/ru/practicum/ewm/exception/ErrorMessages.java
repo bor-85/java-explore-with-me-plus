@@ -11,6 +11,9 @@ public final class ErrorMessages {
     public static final String EVENT_PUBLISH_TOO_LATE = "Event date must be at least %d hours after publication: %s";
     public static final String RANGE_START_AFTER_END = "rangeStart must not be after rangeEnd";
 
+    public static final String COMPILATION_NOT_FOUND = "Compilation with id=%d was not found";
+    public static final String COMPILATION_ALREADY_EXISTS = "Compilation with title '%s' already exists";
+
     private ErrorMessages() {
     }
 }
