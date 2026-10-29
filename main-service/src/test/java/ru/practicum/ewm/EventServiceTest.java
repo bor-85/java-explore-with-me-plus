@@ -8,6 +8,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import ru.practicum.ewm.dto.event.EventFullDto;
 import ru.practicum.ewm.dto.event.Location;
 import ru.practicum.ewm.dto.event.NewEventDto;
+import ru.practicum.ewm.dto.event.UpdateEventAdminRequest;
 import ru.practicum.ewm.dto.event.UpdateEventUserRequest;
 import ru.practicum.ewm.exception.ConflictException;
 import ru.practicum.ewm.exception.ValidationException;
@@ -74,6 +75,49 @@ class EventServiceTest {
 
         assertThat(result.state()).isEqualTo("CANCELED");
         assertThat(result.title()).isEqualTo("Новое название");
+    }
+
+    @Test
+    void updateAdminEventPublishesPendingEvent() {
+        Event event = event(EventState.PENDING);
+        when(eventRepository.findById(1L)).thenReturn(Optional.of(event));
+
+        EventFullDto result = eventService.updateAdminEvent(1L, adminRequest("PUBLISH_EVENT"));
+
+        assertThat(result.state()).isEqualTo("PUBLISHED");
+        assertThat(result.publishedOn()).isNotNull();
+    }
+
+    @Test
+    void updateAdminEventThrowsConflictWhenPublishingNotPendingEvent() {
+        Event event = event(EventState.CANCELED);
+        when(eventRepository.findById(1L)).thenReturn(Optional.of(event));
+
+        assertThatThrownBy(() -> eventService.updateAdminEvent(1L, adminRequest("PUBLISH_EVENT")))
+                .isInstanceOf(ConflictException.class);
+    }
+
+    @Test
+    void updateAdminEventThrowsConflictWhenPublishingLessThanHourBeforeEvent() {
+        Event event = event(EventState.PENDING);
+        event.setEventDate(LocalDateTime.now().plusMinutes(30));
+        when(eventRepository.findById(1L)).thenReturn(Optional.of(event));
+
+        assertThatThrownBy(() -> eventService.updateAdminEvent(1L, adminRequest("PUBLISH_EVENT")))
+                .isInstanceOf(ConflictException.class);
+    }
+
+    @Test
+    void updateAdminEventThrowsConflictWhenRejectingPublishedEvent() {
+        Event event = event(EventState.PUBLISHED);
+        when(eventRepository.findById(1L)).thenReturn(Optional.of(event));
+
+        assertThatThrownBy(() -> eventService.updateAdminEvent(1L, adminRequest("REJECT_EVENT")))
+                .isInstanceOf(ConflictException.class);
+    }
+
+    private UpdateEventAdminRequest adminRequest(String stateAction) {
+        return new UpdateEventAdminRequest(null, null, null, null, null, null, null, null, stateAction, null);
     }
 
     private NewEventDto newEventDto(LocalDateTime eventDate) {
