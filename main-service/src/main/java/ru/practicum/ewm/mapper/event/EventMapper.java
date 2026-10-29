@@ -5,7 +5,7 @@ import ru.practicum.ewm.dto.event.EventFullDto;
 import ru.practicum.ewm.dto.event.EventShortDto;
 import ru.practicum.ewm.dto.event.Location;
 import ru.practicum.ewm.dto.event.NewEventDto;
-import ru.practicum.ewm.dto.user.UserShortDto;
+import ru.practicum.ewm.mapper.user.UserMapper;
 import ru.practicum.ewm.model.Category;
 import ru.practicum.ewm.model.event.Event;
 import ru.practicum.ewm.model.event.EventState;
@@ -45,7 +45,7 @@ public final class EventMapper {
                 event.getCreatedOn(),
                 event.getDescription(),
                 event.getEventDate(),
-                toUserShortDto(event.getInitiator()),
+                UserMapper.toShortDto(event.getInitiator()),
                 new Location(event.getLat(), event.getLon()),
                 event.getPaid(),
                 event.getParticipantLimit(),
@@ -64,7 +64,7 @@ public final class EventMapper {
                 toCategoryDto(event.getCategory()),
                 0L,
                 event.getEventDate(),
-                toUserShortDto(event.getInitiator()),
+                UserMapper.toShortDto(event.getInitiator()),
                 event.getPaid(),
                 event.getTitle(),
                 0L
@@ -73,9 +73,5 @@ public final class EventMapper {
 
     private static CategoryDto toCategoryDto(Category category) {
         return new CategoryDto(category.getId(), category.getName());
-    }
-
-    private static UserShortDto toUserShortDto(User user) {
-        return new UserShortDto(user.getId(), user.getName());
     }
 }
