@@ -8,6 +8,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import ru.practicum.ewm.dto.event.EventFullDto;
 import ru.practicum.ewm.dto.event.Location;
 import ru.practicum.ewm.dto.event.NewEventDto;
+import ru.practicum.ewm.dto.event.UpdateEventAdminRequest;
 import ru.practicum.ewm.dto.event.UpdateEventUserRequest;
 import ru.practicum.ewm.exception.ConflictException;
 import ru.practicum.ewm.exception.ValidationException;
@@ -17,7 +18,7 @@ import ru.practicum.ewm.model.event.EventState;
 import ru.practicum.ewm.model.User;
 import ru.practicum.ewm.repository.category.CategoryRepository;
 import ru.practicum.ewm.repository.event.EventRepository;
-import ru.practicum.ewm.repository.UserRepository;
+import ru.practicum.ewm.repository.user.UserRepository;
 import ru.practicum.ewm.service.event.EventService;
 
 import java.time.LocalDateTime;
@@ -29,6 +30,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
 
 @ExtendWith(MockitoExtension.class)
 class EventServiceTest {
@@ -48,8 +50,8 @@ class EventServiceTest {
     @Test
     void createEventThrowsWhenEventDateEarlierThanTwoHours() {
         NewEventDto dto = newEventDto(LocalDateTime.now().plusHours(1));
-        when(userRepository.findById(1L)).thenReturn(Optional.of(new User(1L, "Пользователь", "user@mail.ru")));
-        when(categoryRepository.findById(1L)).thenReturn(Optional.of(new Category(1L, "Концерты")));
+        when(userRepository.findById(1L)).thenReturn(Optional.of(new User(1L, "user", "user@mail.ru")));
+        when(categoryRepository.findById(1L)).thenReturn(Optional.of(new Category(1L, "concerts")));
 
         assertThatThrownBy(() -> eventService.createEvent(1L, dto))
                 .isInstanceOf(ValidationException.class);
@@ -73,42 +75,85 @@ class EventServiceTest {
         EventFullDto result = eventService.updateUserEvent(1L, 1L, updateRequest("CANCEL_REVIEW"));
 
         assertThat(result.state()).isEqualTo("CANCELED");
-        assertThat(result.title()).isEqualTo("Новое название");
+        assertThat(result.title()).isEqualTo("New title");
+    }
+
+    @Test
+    void updateAdminEventPublishesPendingEvent() {
+        Event event = event(EventState.PENDING);
+        when(eventRepository.findById(1L)).thenReturn(Optional.of(event));
+
+        EventFullDto result = eventService.updateAdminEvent(1L, adminRequest("PUBLISH_EVENT"));
+
+        assertThat(result.state()).isEqualTo("PUBLISHED");
+        assertThat(result.publishedOn()).isNotNull();
+    }
+
+    @Test
+    void updateAdminEventThrowsConflictWhenPublishingNotPendingEvent() {
+        Event event = event(EventState.CANCELED);
+        when(eventRepository.findById(1L)).thenReturn(Optional.of(event));
+
+        assertThatThrownBy(() -> eventService.updateAdminEvent(1L, adminRequest("PUBLISH_EVENT")))
+                .isInstanceOf(ConflictException.class);
+    }
+
+    @Test
+    void updateAdminEventThrowsConflictWhenPublishingLessThanHourBeforeEvent() {
+        Event event = event(EventState.PENDING);
+        event.setEventDate(LocalDateTime.now().plusMinutes(30));
+        when(eventRepository.findById(1L)).thenReturn(Optional.of(event));
+
+        assertThatThrownBy(() -> eventService.updateAdminEvent(1L, adminRequest("PUBLISH_EVENT")))
+                .isInstanceOf(ConflictException.class);
+    }
+
+    @Test
+    void updateAdminEventThrowsConflictWhenRejectingPublishedEvent() {
+        Event event = event(EventState.PUBLISHED);
+        when(eventRepository.findById(1L)).thenReturn(Optional.of(event));
+
+        assertThatThrownBy(() -> eventService.updateAdminEvent(1L, adminRequest("REJECT_EVENT")))
+                .isInstanceOf(ConflictException.class);
+    }
+
+    private UpdateEventAdminRequest adminRequest(String stateAction) {
+        return new UpdateEventAdminRequest(null, null, null, null, null, null, null, null, stateAction, null);
     }
 
     private NewEventDto newEventDto(LocalDateTime eventDate) {
         return new NewEventDto(
-                "Аннотация тестового события",
+                "Annotation of the test event",
                 1L,
-                "Описание тестового события",
+                "Description of the test event",
                 eventDate,
                 new Location(55.75, 37.62),
                 null,
                 null,
                 null,
-                "Название"
+                "Title"
         );
     }
 
     private UpdateEventUserRequest updateRequest(String stateAction) {
-        return new UpdateEventUserRequest(null, null, null, null, null, null, null, null, stateAction, "Новое название");
+        return new UpdateEventUserRequest(null, null, null, null, null, null, null, null, stateAction, "New title");
     }
 
     private Event event(EventState state) {
         Event event = new Event();
         event.setId(1L);
-        event.setAnnotation("Аннотация тестового события");
-        event.setCategory(new Category(1L, "Концерты"));
-        event.setDescription("Описание тестового события");
+        event.setAnnotation("Annotation of the test event");
+        event.setCategory(new Category(1L, "concerts"));
+        event.setDescription("Description of the test event");
         event.setEventDate(LocalDateTime.now().plusDays(1));
-        event.setInitiator(new User(1L, "Пользователь", "user@mail.ru"));
+        event.setInitiator(new User(1L, "user", "user@mail.ru"));
         event.setLat(55.75);
         event.setLon(37.62);
         event.setPaid(false);
         event.setParticipantLimit(0);
         event.setRequestModeration(true);
         event.setState(state);
-        event.setTitle("Название");
+        event.setTitle("Title");
         event.setCreatedOn(LocalDateTime.now());
         return event;
     }
