@@ -7,6 +7,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import ru.practicum.client.StatClient;
 import ru.practicum.ewm.controller.category.AdminCategoryController;
 import ru.practicum.ewm.dto.category.CategoryDto;
 import ru.practicum.ewm.exception.ConflictException;
@@ -31,6 +32,9 @@ class AdminCategoryControllerTest {
 
     @MockBean
     private CategoryService categoryService;
+
+    @MockBean
+    private StatClient statClient;
 
     @Test
     void createCategoryReturnsCreatedCategory() throws Exception {
