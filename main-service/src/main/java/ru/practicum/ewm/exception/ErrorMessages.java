@@ -17,6 +17,8 @@ public final class ErrorMessages {
     public static final String SELF_REGISTRATION_FORBIDDEN = "You cannot join an event you created";
     public static final String REQUEST_NOT_FOUND = "Request with id=%d not found for user with id=%d";
     public static final String REQUEST_ALREADY_EXISTS = "User with id=%d has already been sent request for event with id=%d";
+    public static final String REQUESTS_NOT_FOUND = "Requests %s were not found for event with id=%d";
+    public static final String REQUEST_NOT_PENDING = "Request must have status PENDING";
 
 
     public static final String COMPILATION_NOT_FOUND = "Compilation with id=%d was not found";

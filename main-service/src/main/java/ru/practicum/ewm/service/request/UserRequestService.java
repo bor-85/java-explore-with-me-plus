@@ -4,6 +4,8 @@ import jakarta.validation.constraints.PositiveOrZero;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import ru.practicum.ewm.dto.request.EventRequestStatusUpdateRequest;
+import ru.practicum.ewm.dto.request.EventRequestStatusUpdateResult;
 import ru.practicum.ewm.dto.request.ParticipationRequestDto;
 import ru.practicum.ewm.exception.ConflictException;
 import ru.practicum.ewm.exception.ErrorMessages;
@@ -19,6 +21,7 @@ import ru.practicum.ewm.repository.request.RequestRepository;
 import ru.practicum.ewm.repository.user.UserRepository;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -93,5 +96,62 @@ public class UserRequestService {
         request.setStatus(RequestStatus.CANCELED);
 
         return RequestMapper.toParticipationRequestDto(requestRepository.save(request));
+    }
+
+    public List<ParticipationRequestDto> getEventRequests(Long userId, Long eventId) {
+        getInitiatorEvent(userId, eventId);
+        return requestRepository.findAllByEvent_Id(eventId).stream()
+                .map(RequestMapper::toParticipationRequestDto)
+                .toList();
+    }
+
+    @Transactional
+    public EventRequestStatusUpdateResult updateEventRequests(Long userId, Long eventId,
+                                                              EventRequestStatusUpdateRequest dto) {
+        Event event = getInitiatorEvent(userId, eventId);
+        List<Long> requestIds = dto.requestIds().stream().distinct().toList();
+        List<Request> requests = requestRepository.findAllByEvent_IdAndIdIn(eventId, requestIds);
+        if (requests.size() != requestIds.size()) {
+            throw new NotFoundException(ErrorMessages.REQUESTS_NOT_FOUND.formatted(requestIds, eventId));
+        }
+        if (requests.stream().anyMatch(r -> r.getStatus() != RequestStatus.PENDING)) {
+            throw new ConflictException(ErrorMessages.REQUEST_NOT_PENDING);
+        }
+
+        List<ParticipationRequestDto> confirmed = new ArrayList<>();
+        List<ParticipationRequestDto> rejected = new ArrayList<>();
+        if (RequestStatus.REJECTED.name().equals(dto.status())) {
+            requests.forEach(r -> {
+                r.setStatus(RequestStatus.REJECTED);
+                rejected.add(RequestMapper.toParticipationRequestDto(r));
+            });
+            return new EventRequestStatusUpdateResult(confirmed, rejected);
+        }
+
+        int limit = event.getParticipantLimit();
+        long confirmedCount = requestRepository.countByEvent_IdAndStatus(eventId, RequestStatus.CONFIRMED);
+        if (limit > 0 && confirmedCount >= limit) {
+            throw new ConflictException(ErrorMessages.EVENT_OUT_OF_LIMIT);
+        }
+        for (Request request : requests) {
+            if (limit == 0 || confirmedCount < limit) {
+                request.setStatus(RequestStatus.CONFIRMED);
+                confirmedCount++;
+                confirmed.add(RequestMapper.toParticipationRequestDto(request));
+            } else {
+                request.setStatus(RequestStatus.REJECTED);
+                rejected.add(RequestMapper.toParticipationRequestDto(request));
+            }
+        }
+        if (limit > 0 && confirmedCount >= limit) {
+            requestRepository.findAllByEvent_IdAndStatus(eventId, RequestStatus.PENDING)
+                    .forEach(r -> r.setStatus(RequestStatus.REJECTED));
+        }
+        return new EventRequestStatusUpdateResult(confirmed, rejected);
+    }
+
+    private Event getInitiatorEvent(Long userId, Long eventId) {
+        return eventRepository.findByIdAndInitiatorId(eventId, userId)
+                .orElseThrow(() -> new NotFoundException(ErrorMessages.EVENT_NOT_FOUND.formatted(eventId)));
     }
 }
