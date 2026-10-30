@@ -13,6 +13,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import ru.practicum.client.StatClient;
 import ru.practicum.ewm.controller.user.AdminUserController;
 import ru.practicum.ewm.dto.user.NewUserRequestDto;
 import ru.practicum.ewm.model.User;
@@ -40,6 +41,9 @@ class AdminUserControllerTest {
 
     @MockBean
     private UserRepository userRepository;
+
+    @MockBean
+    private StatClient statClient;
 
     @Test
     void createUserReturns201WithSavedUser() throws Exception {
