@@ -12,7 +12,7 @@ import ru.practicum.ewm.dto.compilation.UpdateCompilationRequest;
 import ru.practicum.ewm.exception.ConflictException;
 import ru.practicum.ewm.exception.NotFoundException;
 import ru.practicum.ewm.mapper.compilation.CompilationMapper;
-import ru.practicum.ewm.model.Category;
+import ru.practicum.ewm.model.category.Category;
 import ru.practicum.ewm.model.User;
 import ru.practicum.ewm.model.compilation.Compilation;
 import ru.practicum.ewm.model.event.Event;

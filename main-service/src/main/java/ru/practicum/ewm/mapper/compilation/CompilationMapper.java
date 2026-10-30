@@ -18,7 +18,7 @@ public class CompilationMapper {
         List<ru.practicum.ewm.dto.event.EventShortDto> events = compilation.getEvents() == null
                 ? List.of()
                 : compilation.getEvents().stream()
-                .map(EventMapper::toShortDto)
+                .map(event -> EventMapper.toShortDto(event, 0L, 0L))
                 .toList();
 
         return new CompilationDto(
