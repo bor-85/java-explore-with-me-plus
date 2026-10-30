@@ -16,6 +16,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import ru.practicum.ewm.controller.user.AdminUserController;
 import ru.practicum.ewm.dto.user.NewUserRequestDto;
 import ru.practicum.ewm.model.User;
+import ru.practicum.client.StatClient;
 import ru.practicum.ewm.repository.user.UserRepository;
 import ru.practicum.ewm.service.user.AdminUserService;
 
@@ -34,6 +35,9 @@ class AdminUserControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @MockBean
+    private StatClient statClient;
 
     @Autowired
     private ObjectMapper objectMapper;
