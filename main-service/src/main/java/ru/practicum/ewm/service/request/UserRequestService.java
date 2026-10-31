@@ -1,6 +1,5 @@
 package ru.practicum.ewm.service.request;
 
-import jakarta.validation.constraints.PositiveOrZero;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,7 +33,7 @@ public class UserRequestService {
 
 
     @Transactional
-    public ParticipationRequestDto createRequest(@PositiveOrZero Long userId, @PositiveOrZero Long eventId) {
+    public ParticipationRequestDto createRequest(Long userId, Long eventId) {
         if (!userRepository.existsById(userId)) {
             throw new NotFoundException(ErrorMessages.USER_NOT_FOUND.formatted(userId));
         }
@@ -75,7 +74,7 @@ public class UserRequestService {
         return RequestMapper.toParticipationRequestDto(requestRepository.save(request));
     }
 
-    public List<ParticipationRequestDto> findAllUserRequest(@PositiveOrZero Long userId) {
+    public List<ParticipationRequestDto> findAllUserRequest(Long userId) {
         if (!userRepository.existsById(userId)) {
             throw new NotFoundException(ErrorMessages.USER_NOT_FOUND.formatted(userId));
         }
@@ -86,7 +85,7 @@ public class UserRequestService {
     }
 
     @Transactional
-    public ParticipationRequestDto cancelRequest(@PositiveOrZero Long userId, @PositiveOrZero Long requestId) {
+    public ParticipationRequestDto cancelRequest(Long userId, Long requestId) {
         if (!userRepository.existsById(userId)) {
             throw new NotFoundException(ErrorMessages.USER_NOT_FOUND.formatted(userId));
         }

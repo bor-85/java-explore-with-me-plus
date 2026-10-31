@@ -13,7 +13,7 @@ public final class ErrorMessages {
     public static final String EVENT_PUBLISH_TOO_LATE = "Event date must be at least %d hours after publication: %s";
     public static final String EVENT_OUT_OF_LIMIT = "The participant limit for this event has been reached";
     public static final String EVENT_STATUS_IS_NOT_PUBLISHED = "Event status is not PUBLISHED";
-    public static final String RANGE_START_AFTER_END = "RangeStart must not be after rangeEnd";
+    public static final String RANGE_START_AFTER_END = "rangeStart must not be after rangeEnd";
     public static final String SELF_REGISTRATION_FORBIDDEN = "You cannot join an event you created";
     public static final String REQUEST_NOT_FOUND = "Request with id=%d not found for user with id=%d";
     public static final String REQUEST_ALREADY_EXISTS = "User with id=%d has already been sent request for event with id=%d";

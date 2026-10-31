@@ -1,7 +1,7 @@
 package ru.practicum.ewm.controller.request;
 
 
-import jakarta.validation.constraints.PositiveOrZero;
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
@@ -12,29 +12,27 @@ import ru.practicum.ewm.service.request.UserRequestService;
 import java.util.List;
 
 @RestController
-@RequestMapping("/users")
+@RequestMapping("/users/{userId}/requests")
 @Validated
 @RequiredArgsConstructor
 public class UserRequestController {
     private final UserRequestService requestService;
 
-    @PostMapping("/{userId}/requests")
+    @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ParticipationRequestDto createRequest(@RequestParam @PositiveOrZero Long eventId,
-                                                 @PathVariable @PositiveOrZero Long userId){
+    public ParticipationRequestDto createRequest(@RequestParam @Positive Long eventId,
+                                                 @PathVariable @Positive Long userId) {
         return requestService.createRequest(userId, eventId);
     }
 
-    @GetMapping("/{userId}/requests")
-    @ResponseStatus(HttpStatus.OK)
-    public List<ParticipationRequestDto> findAllUserRequest(@PathVariable @PositiveOrZero Long userId){
+    @GetMapping
+    public List<ParticipationRequestDto> findAllUserRequest(@PathVariable @Positive Long userId) {
         return requestService.findAllUserRequest(userId);
     }
 
-    @PatchMapping("/{userId}/requests/{requestId}/cancel")
-    @ResponseStatus(HttpStatus.OK)
-    public ParticipationRequestDto cancelRequest(@PathVariable @PositiveOrZero Long userId,
-                                                 @PathVariable @PositiveOrZero Long requestId){
+    @PatchMapping("/{requestId}/cancel")
+    public ParticipationRequestDto cancelRequest(@PathVariable @Positive Long userId,
+                                                 @PathVariable @Positive Long requestId) {
         return requestService.cancelRequest(userId, requestId);
     }
 }

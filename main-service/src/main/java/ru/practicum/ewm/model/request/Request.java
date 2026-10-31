@@ -1,7 +1,11 @@
 package ru.practicum.ewm.model.request;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import ru.practicum.ewm.model.User;
 import ru.practicum.ewm.model.event.Event;
 
