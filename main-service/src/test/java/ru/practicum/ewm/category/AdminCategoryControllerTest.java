@@ -109,7 +109,7 @@ class AdminCategoryControllerTest {
 
         mockMvc.perform(patch("/admin/categories/{catId}", 1L)
                         .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"name\":\"\"}"))
+                        .content("{\"name\":\"%s\"}".formatted(longName)))
                 .andExpect(status().isBadRequest());
 
         verifyNoInteractions(categoryService);

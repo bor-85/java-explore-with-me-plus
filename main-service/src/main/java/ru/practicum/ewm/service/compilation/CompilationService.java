@@ -13,6 +13,8 @@ import ru.practicum.ewm.model.compilation.Compilation;
 import ru.practicum.ewm.model.event.Event;
 import ru.practicum.ewm.repository.compilation.CompilationRepository;
 import ru.practicum.ewm.repository.event.EventRepository;
+import ru.practicum.ewm.service.event.EventService;
+
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -28,6 +30,7 @@ public class CompilationService {
     private final CompilationRepository compilationRepository;
     private final EventRepository eventRepository;
     private final CompilationMapper compilationMapper;
+    private final EventService eventService;
 
     @Transactional
     public CompilationDto createCompilation(NewCompilationDto newCompilationDto) {
@@ -36,7 +39,7 @@ public class CompilationService {
         List<Event> events = loadEvents(newCompilationDto.events());
         Compilation compilation = compilationMapper.toEntity(newCompilationDto, events);
 
-        return compilationMapper.toDto(compilationRepository.save(compilation));
+        return toDto(compilationRepository.save(compilation));
     }
 
     @Transactional
@@ -53,7 +56,7 @@ public class CompilationService {
 
         compilationMapper.update(compilation, updateCompilationRequest, events);
 
-        return compilationMapper.toDto(compilation);
+        return toDto(compilation);
     }
 
     @Transactional
@@ -65,7 +68,7 @@ public class CompilationService {
     @Transactional(readOnly = true)
     public List<CompilationDto> getCompilations(Boolean pinned, Integer from, Integer size) {
         return compilationRepository.findAllPaged(pinned, from, size).stream()
-                .map(compilationMapper::toDto)
+                .map(this::toDto)
                 .toList();
     }
 
@@ -76,7 +79,11 @@ public class CompilationService {
                         COMPILATION_NOT_FOUND.formatted(compId)
                 ));
 
-        return compilationMapper.toDto(compilation);
+        return toDto(compilation);
+    }
+
+    private CompilationDto toDto(Compilation compilation) {
+        return compilationMapper.toDto(compilation, eventService.toShortDtos(compilation.getEvents()));
     }
 
     private Compilation getCompilationOrThrow(Long compId) {
@@ -92,9 +99,7 @@ public class CompilationService {
                 : compilationRepository.existsByTitleAndIdNot(title, currentId);
 
         if (exists) {
-            throw new ConflictException(
-                    COMPILATION_ALREADY_EXISTS.formatted(title)
-            );
+            throw new ConflictException(COMPILATION_ALREADY_EXISTS.formatted(title));
         }
     }
 
@@ -122,5 +127,4 @@ public class CompilationService {
                 .map(eventsById::get)
                 .toList();
     }
-
 }
