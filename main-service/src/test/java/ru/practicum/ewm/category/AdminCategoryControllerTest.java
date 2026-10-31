@@ -7,6 +7,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import ru.practicum.client.StatClient;
 import ru.practicum.ewm.controller.category.AdminCategoryController;
 import ru.practicum.ewm.dto.category.CategoryDto;
 import ru.practicum.ewm.exception.ConflictException;
@@ -17,9 +18,7 @@ import ru.practicum.ewm.service.category.CategoryService;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -31,6 +30,9 @@ class AdminCategoryControllerTest {
 
     @MockBean
     private CategoryService categoryService;
+
+    @MockBean
+    private StatClient statClient;
 
     @Test
     void createCategoryReturnsCreatedCategory() throws Exception {
@@ -95,8 +97,8 @@ class AdminCategoryControllerTest {
         mockMvc.perform(patch("/admin/categories/{catId}", 1L)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                            {"name": ""}
-                            """))
+                                {"name": ""}
+                                """))
                 .andExpect(status().isBadRequest());
 
         verifyNoInteractions(categoryService);
@@ -109,8 +111,8 @@ class AdminCategoryControllerTest {
         mockMvc.perform(patch("/admin/categories/{catId}", 1L)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                            {"name": "%s"}
-                            """.formatted(longName)))
+                                {"name": "%s"}
+                                """.formatted(longName)))
                 .andExpect(status().isBadRequest());
 
         verifyNoInteractions(categoryService);

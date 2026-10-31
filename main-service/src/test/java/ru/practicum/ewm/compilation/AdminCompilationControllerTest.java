@@ -7,6 +7,7 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import ru.practicum.client.StatClient;
 import ru.practicum.ewm.controller.compilation.AdminCompilationController;
 import ru.practicum.ewm.dto.compilation.CompilationDto;
 import ru.practicum.ewm.exception.ConflictException;
@@ -37,6 +38,9 @@ class AdminCompilationControllerTest {
 
     @MockBean
     private CompilationService compilationService;
+
+    @MockBean
+    private StatClient statClient;
 
     @Test
     void createCompilationReturnsCreatedCompilation() throws Exception {
