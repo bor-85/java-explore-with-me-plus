@@ -172,7 +172,7 @@ public class EventService {
                 .toList();
     }
 
-    private List<EventShortDto> toShortDtos(List<Event> events) {
+    public List<EventShortDto> toShortDtos(List<Event> events) {
         Map<Long, Long> confirmed = getConfirmedRequests(events);
         Map<Long, Long> views = getViews(events);
         return events.stream()

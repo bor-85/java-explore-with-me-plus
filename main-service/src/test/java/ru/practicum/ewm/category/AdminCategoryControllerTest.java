@@ -13,7 +13,6 @@ import ru.practicum.ewm.exception.ConflictException;
 import ru.practicum.ewm.exception.NotFoundException;
 import ru.practicum.ewm.exception.RestExceptionHandler;
 import ru.practicum.ewm.service.category.CategoryService;
-
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
@@ -94,9 +93,7 @@ class AdminCategoryControllerTest {
     void patchCategoryReturnsBadRequestWhenNameIsBlank() throws Exception {
         mockMvc.perform(patch("/admin/categories/{catId}", 1L)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                            {"name": ""}
-                            """))
+                        .content("{\"name\":\"\"}"))
                 .andExpect(status().isBadRequest());
 
         verifyNoInteractions(categoryService);
@@ -108,9 +105,7 @@ class AdminCategoryControllerTest {
 
         mockMvc.perform(patch("/admin/categories/{catId}", 1L)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                            {"name": "%s"}
-                            """.formatted(longName)))
+                        .content("{\"name\":\"%s\"}".formatted(longName)))
                 .andExpect(status().isBadRequest());
 
         verifyNoInteractions(categoryService);

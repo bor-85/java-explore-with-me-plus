@@ -15,10 +15,12 @@ import ru.practicum.ewm.repository.category.CategoryRepository;
 import ru.practicum.ewm.repository.event.EventRepository;
 import ru.practicum.ewm.service.category.CategoryService;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -76,7 +78,7 @@ class CategoryServiceTest {
         assertThrows(ConflictException.class, () -> categoryService.createCategory(dto));
 
         verify(categoryRepository).existsByName("Music");
-        verify(categoryRepository, never()).save(org.mockito.ArgumentMatchers.any());
+        verify(categoryRepository, never()).save(any());
     }
 
     @Test
@@ -126,7 +128,7 @@ class CategoryServiceTest {
 
         verify(categoryRepository).findById(1L);
         verify(categoryRepository).existsByNameAndIdNot("Rock", 1L);
-        verify(categoryRepository, never()).save(org.mockito.ArgumentMatchers.any());
+        verify(categoryRepository, never()).save(any());
     }
 
     @Test
@@ -162,7 +164,7 @@ class CategoryServiceTest {
 
         verify(categoryRepository).findById(1L);
         verify(eventRepository).existsByCategory_Id(1L);
-        verify(categoryRepository, never()).delete(org.mockito.ArgumentMatchers.any());
+        verify(categoryRepository, never()).delete(any());
     }
 
     @Test
@@ -173,8 +175,8 @@ class CategoryServiceTest {
         assertThrows(NotFoundException.class, () -> categoryService.deleteCategory(1L));
 
         verify(categoryRepository).findById(1L);
-        verify(eventRepository, never()).existsByCategory_Id(org.mockito.ArgumentMatchers.any());
-        verify(categoryRepository, never()).delete(org.mockito.ArgumentMatchers.any());
+        verify(eventRepository, never()).existsByCategory_Id(any());
+        verify(categoryRepository, never()).delete(any());
     }
 
     @Test
@@ -194,7 +196,7 @@ class CategoryServiceTest {
 
         verify(categoryRepository).findById(1L);
         verify(categoryRepository).existsByNameAndIdNot("Rock", 1L);
-        verify(categoryRepository, never()).save(org.mockito.ArgumentMatchers.any());
+        verify(categoryRepository, never()).save(any());
     }
 
     @Test
@@ -212,6 +214,46 @@ class CategoryServiceTest {
 
         verify(categoryRepository).findById(1L);
         verify(eventRepository).existsByCategory_Id(1L);
-        verify(categoryRepository, never()).delete(org.mockito.ArgumentMatchers.any());
+        verify(categoryRepository, never()).delete(any());
+    }
+
+    @Test
+    void getCategoriesReturnsCategoriesList() {
+        Category first = new Category();
+        first.setId(1L);
+        first.setName("Music");
+
+        Category second = new Category();
+        second.setId(2L);
+        second.setName("Cinema");
+
+        when(categoryRepository.findAllPaged(0, 10))
+                .thenReturn(List.of(first, second));
+        when(categoryMapper.toDto(first))
+                .thenReturn(new CategoryDto(1L, "Music"));
+        when(categoryMapper.toDto(second))
+                .thenReturn(new CategoryDto(2L, "Cinema"));
+
+        List<CategoryDto> result = categoryService.getCategories(0, 10);
+
+        assertEquals(List.of(
+                new CategoryDto(1L, "Music"),
+                new CategoryDto(2L, "Cinema")
+        ), result);
+
+        verify(categoryRepository).findAllPaged(0, 10);
+        verify(categoryMapper).toDto(first);
+        verify(categoryMapper).toDto(second);
+    }
+
+    @Test
+    void getCategoryThrowsNotFoundWhenCategoryMissing() {
+        when(categoryRepository.findById(1L))
+                .thenReturn(Optional.empty());
+
+        assertThrows(NotFoundException.class, () -> categoryService.getCategory(1L));
+
+        verify(categoryRepository).findById(1L);
+        verify(categoryMapper, never()).toDto(any());
     }
 }

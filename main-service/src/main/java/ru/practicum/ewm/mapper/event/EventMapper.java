@@ -5,7 +5,6 @@ import ru.practicum.ewm.dto.event.EventFullDto;
 import ru.practicum.ewm.dto.event.EventShortDto;
 import ru.practicum.ewm.dto.event.Location;
 import ru.practicum.ewm.dto.event.NewEventDto;
-import ru.practicum.ewm.dto.user.UserShortDto;
 import ru.practicum.ewm.model.category.Category;
 import ru.practicum.ewm.mapper.user.UserMapper;
 import ru.practicum.ewm.model.User;
