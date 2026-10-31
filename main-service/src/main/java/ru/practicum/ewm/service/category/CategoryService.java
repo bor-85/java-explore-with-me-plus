@@ -12,6 +12,8 @@ import ru.practicum.ewm.model.category.Category;
 import ru.practicum.ewm.repository.category.CategoryRepository;
 import ru.practicum.ewm.repository.event.EventRepository;
 
+import java.util.List;
+
 import static ru.practicum.ewm.exception.ErrorMessages.CATEGORY_ALREADY_EXISTS;
 import static ru.practicum.ewm.exception.ErrorMessages.CATEGORY_IS_NOT_EMPTY;
 import static ru.practicum.ewm.exception.ErrorMessages.CATEGORY_NOT_FOUND;
@@ -60,6 +62,18 @@ public class CategoryService {
         }
 
         categoryRepository.delete(category);
+    }
+
+    @Transactional(readOnly = true)
+    public List<CategoryDto> getCategories(int from, int size) {
+        return categoryRepository.findAllPaged(from, size).stream()
+                .map(categoryMapper::toDto)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public CategoryDto getCategory(Long catId) {
+        return categoryMapper.toDto(getCategoryOrThrow(catId));
     }
 
     private Category getCategoryOrThrow(Long catId) {
