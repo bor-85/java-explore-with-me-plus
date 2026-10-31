@@ -7,7 +7,6 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-import ru.practicum.client.StatClient;
 import ru.practicum.ewm.controller.compilation.AdminCompilationController;
 import ru.practicum.ewm.dto.compilation.CompilationDto;
 import ru.practicum.ewm.exception.ConflictException;
@@ -35,9 +34,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class AdminCompilationControllerTest {
     @Autowired
     private MockMvc mockMvc;
-
-    @MockBean
-    private StatClient statClient;
 
     @MockBean
     private CompilationService compilationService;

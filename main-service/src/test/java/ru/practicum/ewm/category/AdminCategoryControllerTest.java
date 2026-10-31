@@ -13,7 +13,6 @@ import ru.practicum.ewm.exception.ConflictException;
 import ru.practicum.ewm.exception.NotFoundException;
 import ru.practicum.ewm.exception.RestExceptionHandler;
 import ru.practicum.ewm.service.category.CategoryService;
-import ru.practicum.client.StatClient;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
@@ -28,9 +27,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class AdminCategoryControllerTest {
     @Autowired
     private MockMvc mockMvc;
-
-    @MockBean
-    private StatClient statClient;
 
     @MockBean
     private CategoryService categoryService;

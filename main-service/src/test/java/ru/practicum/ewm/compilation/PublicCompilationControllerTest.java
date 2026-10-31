@@ -6,7 +6,6 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.web.servlet.MockMvc;
-import ru.practicum.client.StatClient;
 import ru.practicum.ewm.controller.compilation.PublicCompilationController;
 import ru.practicum.ewm.dto.compilation.CompilationDto;
 import ru.practicum.ewm.exception.NotFoundException;
@@ -29,9 +28,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class PublicCompilationControllerTest {
     @Autowired
     private MockMvc mockMvc;
-
-    @MockBean
-    private StatClient statClient;
 
     @MockBean
     private CompilationService compilationService;
