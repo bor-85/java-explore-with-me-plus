@@ -11,7 +11,11 @@ import ru.practicum.ewm.dto.event.EventFullDto;
 import ru.practicum.ewm.dto.event.EventShortDto;
 import ru.practicum.ewm.dto.event.NewEventDto;
 import ru.practicum.ewm.dto.event.UpdateEventUserRequest;
+import ru.practicum.ewm.dto.request.EventRequestStatusUpdateRequest;
+import ru.practicum.ewm.dto.request.EventRequestStatusUpdateResult;
+import ru.practicum.ewm.dto.request.ParticipationRequestDto;
 import ru.practicum.ewm.service.event.EventService;
+import ru.practicum.ewm.service.request.UserRequestService;
 
 import java.util.List;
 
@@ -22,6 +26,7 @@ import java.util.List;
 public class PrivateEventController {
 
     private final EventService eventService;
+    private final UserRequestService requestService;
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
@@ -48,5 +53,18 @@ public class PrivateEventController {
                                         @PathVariable Long eventId,
                                         @Valid @RequestBody UpdateEventUserRequest dto) {
         return eventService.updateUserEvent(userId, eventId, dto);
+    }
+
+    @GetMapping("/{eventId}/requests")
+    public List<ParticipationRequestDto> getEventRequests(@PathVariable Long userId,
+                                                          @PathVariable Long eventId) {
+        return requestService.getEventRequests(userId, eventId);
+    }
+
+    @PatchMapping("/{eventId}/requests")
+    public EventRequestStatusUpdateResult updateEventRequests(@PathVariable Long userId,
+                                                              @PathVariable Long eventId,
+                                                              @Valid @RequestBody EventRequestStatusUpdateRequest dto) {
+        return requestService.updateEventRequests(userId, eventId, dto);
     }
 }
