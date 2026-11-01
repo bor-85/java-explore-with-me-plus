@@ -24,11 +24,13 @@ import ru.practicum.ewm.repository.user.UserRepository;
 import ru.practicum.ewm.service.request.UserRequestService;
 
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -74,7 +76,7 @@ class UserRequestControllerTest {
             request.setId(3L);
             return request;
         });
-        LocalDateTime beforeCreation = LocalDateTime.now();
+        LocalDateTime beforeCreation = LocalDateTime.now().truncatedTo(ChronoUnit.MICROS);
 
         mockMvc.perform(post("/users/{userId}/requests", 1L).param("eventId", "2"))
                 .andExpect(status().isCreated())
@@ -195,7 +197,7 @@ class UserRequestControllerTest {
     @ParameterizedTest
     @CsvSource({"true, 1", "true, 2", "false, 1", "false, 2"})
     void createRequestReturns409WhenParticipantLimitReached(boolean requestModeration,
-                                                           long confirmedRequests) throws Exception {
+                                                            long confirmedRequests) throws Exception {
         when(userRepository.existsById(1L)).thenReturn(true);
         when(eventRepository.findById(2L)).thenReturn(Optional.of(event(requestModeration, 1)));
         when(requestRepository.countByEvent_IdAndStatus(2L, RequestStatus.CONFIRMED))
@@ -215,7 +217,7 @@ class UserRequestControllerTest {
         Event anotherEvent = event(false, 0);
         anotherEvent.setId(5L);
         Request second = request(4L, anotherEvent, RequestStatus.CANCELED);
-        second.setCreated(CREATED.plusMinutes(1));
+        second.setCreated(CREATED.plusMinutes(1).withNano(432_000_000));
         when(userRepository.existsById(1L)).thenReturn(true);
         when(requestRepository.findAllByRequester_Id(1L)).thenReturn(List.of(first, second));
 
@@ -225,12 +227,12 @@ class UserRequestControllerTest {
                 .andExpect(jsonPath("$[0].id").value(3))
                 .andExpect(jsonPath("$[0].event").value(2))
                 .andExpect(jsonPath("$[0].requester").value(1))
-                .andExpect(jsonPath("$[0].created").value(CREATED.toString()))
+                .andExpect(jsonPath("$[0].created").value("2026-10-30T12:00:01"))
                 .andExpect(jsonPath("$[0].status").value("PENDING"))
                 .andExpect(jsonPath("$[1].id").value(4))
                 .andExpect(jsonPath("$[1].event").value(5))
                 .andExpect(jsonPath("$[1].requester").value(1))
-                .andExpect(jsonPath("$[1].created").value(CREATED.plusMinutes(1).toString()))
+                .andExpect(jsonPath("$[1].created").value("2026-10-30T12:01:01.432"))
                 .andExpect(jsonPath("$[1].status").value("CANCELED"));
 
         verify(requestRepository).findAllByRequester_Id(1L);
@@ -285,7 +287,7 @@ class UserRequestControllerTest {
                 .andExpect(jsonPath("$.id").value(3))
                 .andExpect(jsonPath("$.event").value(2))
                 .andExpect(jsonPath("$.requester").value(1))
-                .andExpect(jsonPath("$.created").value(CREATED.toString()))
+                .andExpect(jsonPath("$.created").value("2026-10-30T12:00:01"))
                 .andExpect(jsonPath("$.status").value("CANCELED"));
 
         verify(requestRepository).findByIdAndRequester_Id(3L, 1L);

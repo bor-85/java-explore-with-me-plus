@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
+import ru.practicum.dto.EndpointHitDto;
 
 import java.time.LocalDateTime;
 
@@ -22,7 +23,7 @@ public record NewEventDto(
         String description,
 
         @NotNull
-        @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+        @JsonFormat(pattern = EndpointHitDto.DATE_TIME_PATTERN)
         LocalDateTime eventDate,
 
         @Valid
