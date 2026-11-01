@@ -12,6 +12,7 @@ import ru.practicum.ewm.dto.compilation.UpdateCompilationRequest;
 import ru.practicum.ewm.exception.ConflictException;
 import ru.practicum.ewm.exception.NotFoundException;
 import ru.practicum.ewm.mapper.compilation.CompilationMapper;
+import ru.practicum.ewm.mapper.event.EventMapper;
 import ru.practicum.ewm.model.category.Category;
 import ru.practicum.ewm.model.User;
 import ru.practicum.ewm.model.compilation.Compilation;
@@ -20,6 +21,7 @@ import ru.practicum.ewm.model.event.EventState;
 import ru.practicum.ewm.repository.compilation.CompilationRepository;
 import ru.practicum.ewm.repository.event.EventRepository;
 import ru.practicum.ewm.service.compilation.CompilationService;
+import ru.practicum.ewm.service.event.EventService;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -47,6 +49,9 @@ class CompilationServiceTest {
     @Spy
     private CompilationMapper compilationMapper = new CompilationMapper();
 
+    @Mock
+    private EventService eventService;
+
     @InjectMocks
     private CompilationService compilationService;
 
@@ -65,6 +70,8 @@ class CompilationServiceTest {
                     compilation.setId(1L);
                     return compilation;
                 });
+        when(eventService.toShortDtos(List.of(event)))
+                .thenReturn(List.of(EventMapper.toShortDto(event, 0L, 0L)));
 
         CompilationDto result = compilationService.createCompilation(dto);
 
@@ -122,6 +129,8 @@ class CompilationServiceTest {
                 .thenReturn(false);
         when(eventRepository.findAllById(Set.of(1L)))
                 .thenReturn(List.of(event));
+        when(eventService.toShortDtos(List.of(event)))
+                .thenReturn(List.of(EventMapper.toShortDto(event, 0L, 0L)));
 
         CompilationDto result = compilationService.updateCompilation(1L, dto);
 
@@ -215,10 +224,13 @@ class CompilationServiceTest {
 
     @Test
     void getCompilationsReturnsPagedCompilations() {
-        Compilation compilation = buildCompilation(1L, "Pinned", true, List.of(buildEvent(1L)));
+        Event event = buildEvent(1L);
+        Compilation compilation = buildCompilation(1L, "Pinned", true, List.of(event));
 
         when(compilationRepository.findAllPaged(true, 0, 10))
                 .thenReturn(List.of(compilation));
+        when(eventService.toShortDtos(List.of(event)))
+                .thenReturn(List.of(EventMapper.toShortDto(event, 0L, 0L)));
 
         List<CompilationDto> result = compilationService.getCompilations(true, 0, 10);
 
@@ -244,10 +256,13 @@ class CompilationServiceTest {
 
     @Test
     void getCompilationReturnsDto() {
-        Compilation compilation = buildCompilation(1L, "Summer", false, List.of(buildEvent(1L)));
+        Event event = buildEvent(1L);
+        Compilation compilation = buildCompilation(1L, "Summer", false, List.of(event));
 
         when(compilationRepository.findWithEventsById(1L))
                 .thenReturn(Optional.of(compilation));
+        when(eventService.toShortDtos(List.of(event)))
+                .thenReturn(List.of(EventMapper.toShortDto(event, 0L, 0L)));
 
         CompilationDto result = compilationService.getCompilation(1L);
 
