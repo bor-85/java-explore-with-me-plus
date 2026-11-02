@@ -31,11 +31,14 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.tuple;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 
@@ -154,6 +157,52 @@ class EventServiceTest {
 
         assertThat(result).extracting(EventShortDto::id).containsExactly(2L, 1L);
         assertThat(result).extracting(EventShortDto::views).containsExactly(10L, 5L);
+    }
+
+    @Test
+    void toShortDtosMatchesStatisticsByEventIdAndSumsViews() {
+        Event first = publishedEvent(1L, 0);
+        Event second = publishedEvent(2L, 0);
+        Event withoutStatistics = publishedEvent(3L, 0);
+        Event unpublished = event(EventState.PENDING);
+        unpublished.setId(4L);
+        when(eventRepository.countConfirmedRequests(List.of(1L, 2L, 3L, 4L)))
+                .thenReturn(List.of(new Object[]{2L, 4L}, new Object[]{1L, 2L}));
+        when(statClient.getStats(any(), any(), eq(List.of("/events/1", "/events/2", "/events/3")), eq(true)))
+                .thenReturn(List.of(
+                        new ViewStatsDto("ewm-main-service", "/events/2", 7L),
+                        new ViewStatsDto("ewm-main-service", "/events/1", 5L),
+                        new ViewStatsDto("ewm-main-service", "/events/2", 3L)));
+
+        List<EventShortDto> result = eventService.toShortDtos(List.of(first, second, withoutStatistics, unpublished));
+
+        assertThat(result)
+                .extracting(EventShortDto::id, EventShortDto::confirmedRequests, EventShortDto::views)
+                .containsExactly(tuple(1L, 2L, 5L), tuple(2L, 4L, 10L), tuple(3L, 0L, 0L), tuple(4L, 0L, 0L));
+        verify(eventRepository).countConfirmedRequests(List.of(1L, 2L, 3L, 4L));
+        verify(statClient).getStats(eq(LocalDateTime.of(2000, 1, 1, 0, 0)), any(),
+                eq(List.of("/events/1", "/events/2", "/events/3")), eq(true));
+    }
+
+    @Test
+    void toShortDtosSkipsViewsForUnpublishedEvents() {
+        Event event = event(EventState.PENDING);
+        when(eventRepository.countConfirmedRequests(List.of(1L)))
+                .thenReturn(List.<Object[]>of(new Object[]{1L, 2L}));
+
+        List<EventShortDto> result = eventService.toShortDtos(List.of(event));
+
+        assertThat(result)
+                .extracting(EventShortDto::id, EventShortDto::confirmedRequests, EventShortDto::views)
+                .containsExactly(tuple(1L, 2L, 0L));
+        verifyNoInteractions(statClient);
+    }
+
+    @Test
+    void toShortDtosSkipsStatisticsForEmptyEvents() {
+        assertThat(eventService.toShortDtos(List.of())).isEmpty();
+
+        verifyNoInteractions(eventRepository, statClient);
     }
 
     private Event publishedEvent(Long id, int participantLimit) {

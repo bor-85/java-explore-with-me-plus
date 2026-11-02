@@ -20,6 +20,7 @@ import ru.practicum.ewm.repository.request.RequestRepository;
 import ru.practicum.ewm.repository.user.UserRepository;
 
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -56,7 +57,7 @@ public class UserRequestService {
         User requesterProxy = userRepository.getReferenceById(userId);
 
         Request request = new Request();
-        request.setCreated(LocalDateTime.now());
+        request.setCreated(LocalDateTime.now().truncatedTo(ChronoUnit.MICROS));
         request.setRequester(requesterProxy);
         request.setEvent(event);
         long confirmedRequests = requestRepository.countByEvent_IdAndStatus(eventId, RequestStatus.CONFIRMED);

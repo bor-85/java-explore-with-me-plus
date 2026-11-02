@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+import ru.practicum.dto.EndpointHitDto;
 
 import java.time.LocalDateTime;
 
@@ -16,7 +17,7 @@ public record UpdateEventAdminRequest(
         @Size(min = 20, max = 7000)
         String description,
 
-        @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+        @JsonFormat(pattern = EndpointHitDto.DATE_TIME_PATTERN)
         LocalDateTime eventDate,
 
         @Valid

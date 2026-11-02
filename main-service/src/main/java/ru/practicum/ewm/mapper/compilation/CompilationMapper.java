@@ -15,7 +15,7 @@ import java.util.List;
 public class CompilationMapper {
 
 
-    public CompilationDto toDto(Compilation compilation, List<EventShortDto> events) {    
+    public CompilationDto toDto(Compilation compilation, List<EventShortDto> events) {
         return new CompilationDto(
                 compilation.getId(),
                 compilation.isPinned(),
