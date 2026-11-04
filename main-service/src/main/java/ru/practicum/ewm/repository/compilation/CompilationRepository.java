@@ -17,6 +17,10 @@ public interface CompilationRepository extends JpaRepository<Compilation, Long> 
     @EntityGraph(attributePaths = {"events", "events.category", "events.initiator"})
     Optional<Compilation> findWithEventsById(Long id);
 
+    @EntityGraph(attributePaths = {"events", "events.category", "events.initiator"})
+    @Query("select distinct c from Compilation c where c.id in :ids")
+    List<Compilation> findAllWithEventsByIdIn(@Param("ids") List<Long> ids);
+
     @Query(value = """
             SELECT *
             FROM compilations c

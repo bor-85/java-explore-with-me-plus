@@ -229,6 +229,8 @@ class CompilationServiceTest {
 
         when(compilationRepository.findAllPaged(true, 0, 10))
                 .thenReturn(List.of(compilation));
+        when(compilationRepository.findAllWithEventsByIdIn(List.of(1L)))
+                .thenReturn(List.of(compilation));
         when(eventService.toShortDtos(List.of(event)))
                 .thenReturn(List.of(EventMapper.toShortDto(event, 0L, 0L)));
 
@@ -240,6 +242,8 @@ class CompilationServiceTest {
         assertEquals(1, result.get(0).events().size());
 
         verify(compilationRepository).findAllPaged(true, 0, 10);
+        verify(compilationRepository).findAllWithEventsByIdIn(List.of(1L));
+        verify(eventService).toShortDtos(List.of(event));
     }
 
     @Test
