@@ -139,24 +139,30 @@ class EventServiceTest {
     }
 
     @Test
-    void getPublicEventsSortsByViewsAndSkipsEventsWithoutFreePlaces() {
+    void getPublicEventsSortsByViewsAndAsksRepositoryForAvailableEventsOnly() {
         Event first = publishedEvent(1L, 0);
         Event second = publishedEvent(2L, 0);
-        Event full = publishedEvent(3L, 1);
-        when(eventRepository.findAllPublished(any(), any(), any(), any(), any()))
-                .thenReturn(List.of(first, second, full));
-        when(eventRepository.countConfirmedRequests(anyList()))
-                .thenReturn(List.<Object[]>of(new Object[]{3L, 1L}));
+        // Событие без свободных мест отсекается в БД (onlyAvailable = true),
+        // поэтому в списке кандидатов его нет.
+        when(eventRepository.findPublishedIdsForViewSort(any(), anyBoolean(), any(), anyBoolean(),
+                anyBoolean(), anyBoolean(), any(), any(), anyBoolean(), eq(true)))
+                .thenReturn(List.of(1L, 2L));
+        when(eventRepository.findAllWithRelationsByIdIn(any())).thenReturn(List.of(first, second));
+        when(eventRepository.countConfirmedRequests(anyList())).thenReturn(List.of(
+                new Object[]{1L, 2L},
+                new Object[]{2L, 4L}));
         when(statClient.getStats(any(), any(), anyList(), anyBoolean())).thenReturn(List.of(
                 new ViewStatsDto("ewm-main-service", "/events/1", 5L),
-                new ViewStatsDto("ewm-main-service", "/events/2", 10L),
-                new ViewStatsDto("ewm-main-service", "/events/3", 20L)));
+                new ViewStatsDto("ewm-main-service", "/events/2", 10L)));
 
         List<EventShortDto> result = eventService.getPublicEvents(null, null, null, null, null,
                 true, "VIEWS", 0, 10);
 
-        assertThat(result).extracting(EventShortDto::id).containsExactly(2L, 1L);
-        assertThat(result).extracting(EventShortDto::views).containsExactly(10L, 5L);
+        assertThat(result)
+                .extracting(EventShortDto::id, EventShortDto::views, EventShortDto::confirmedRequests)
+                .containsExactly(tuple(2L, 10L, 4L), tuple(1L, 5L, 2L));
+        verify(eventRepository).findPublishedIdsForViewSort(any(), anyBoolean(), any(), anyBoolean(),
+                anyBoolean(), anyBoolean(), any(), any(), anyBoolean(), eq(true));
     }
 
     @Test

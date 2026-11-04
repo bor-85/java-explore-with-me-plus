@@ -39,7 +39,7 @@ public class UserRequestService {
             throw new NotFoundException(ErrorMessages.USER_NOT_FOUND.formatted(userId));
         }
 
-        Event event = eventRepository.findById(eventId)
+        Event event = eventRepository.findByIdForUpdate(eventId)
                 .orElseThrow(() -> new NotFoundException(ErrorMessages.EVENT_NOT_FOUND.formatted(eventId)));
 
         if (event.getInitiator().getId().equals(userId)) {
@@ -108,7 +108,7 @@ public class UserRequestService {
     @Transactional
     public EventRequestStatusUpdateResult updateEventRequests(Long userId, Long eventId,
                                                               EventRequestStatusUpdateRequest dto) {
-        Event event = getInitiatorEvent(userId, eventId);
+        Event event = getInitiatorEventForUpdate(userId, eventId);
         List<Long> requestIds = dto.requestIds().stream().distinct().toList();
         List<Request> requests = requestRepository.findAllByEvent_IdAndIdIn(eventId, requestIds);
         if (requests.size() != requestIds.size()) {
@@ -152,6 +152,12 @@ public class UserRequestService {
 
     private Event getInitiatorEvent(Long userId, Long eventId) {
         return eventRepository.findByIdAndInitiatorId(eventId, userId)
+                .orElseThrow(() -> new NotFoundException(ErrorMessages.EVENT_NOT_FOUND.formatted(eventId)));
+    }
+
+    private Event getInitiatorEventForUpdate(Long userId, Long eventId) {
+        return eventRepository.findByIdForUpdate(eventId)
+                .filter(event -> event.getInitiator().getId().equals(userId))
                 .orElseThrow(() -> new NotFoundException(ErrorMessages.EVENT_NOT_FOUND.formatted(eventId)));
     }
 }

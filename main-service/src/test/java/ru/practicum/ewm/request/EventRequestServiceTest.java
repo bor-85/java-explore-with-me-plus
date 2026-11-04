@@ -23,11 +23,13 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class EventRequestServiceTest {
     private static final long USER_ID = 10L;
+    private static final long OTHER_USER_ID = 99L;
     private static final long EVENT_ID = 2L;
 
     @Mock
@@ -47,15 +49,28 @@ class EventRequestServiceTest {
     }
 
     @Test
+    void updateThrowsWhenUserIsNotInitiator() {
+        Event event = event(0);
+        event.setInitiator(new User(OTHER_USER_ID, "other", "other@mail.ru"));
+        when(eventRepository.findByIdForUpdate(EVENT_ID)).thenReturn(Optional.of(event));
+
+        assertThrows(NotFoundException.class, () -> requestService.updateEventRequests(USER_ID, EVENT_ID,
+                new EventRequestStatusUpdateRequest(List.of(1L), "REJECTED")));
+        verifyNoInteractions(requestRepository);
+    }
+
+    @Test
     void confirmRejectsOverflowAndRemainingPendingWhenLimitReached() {
         Event event = event(2);
         Request first = request(1L, event, RequestStatus.PENDING);
         Request second = request(2L, event, RequestStatus.PENDING);
         Request other = request(3L, event, RequestStatus.PENDING);
-        when(eventRepository.findByIdAndInitiatorId(EVENT_ID, USER_ID)).thenReturn(Optional.of(event));
-        when(requestRepository.findAllByEvent_IdAndIdIn(EVENT_ID, List.of(1L, 2L))).thenReturn(List.of(first, second));
+        when(eventRepository.findByIdForUpdate(EVENT_ID)).thenReturn(Optional.of(event));
+        when(requestRepository.findAllByEvent_IdAndIdIn(EVENT_ID, List.of(1L, 2L)))
+                .thenReturn(List.of(first, second));
         when(requestRepository.countByEvent_IdAndStatus(EVENT_ID, RequestStatus.CONFIRMED)).thenReturn(1L);
-        when(requestRepository.findAllByEvent_IdAndStatus(EVENT_ID, RequestStatus.PENDING)).thenReturn(List.of(other));
+        when(requestRepository.findAllByEvent_IdAndStatus(EVENT_ID, RequestStatus.PENDING))
+                .thenReturn(List.of(other));
 
         EventRequestStatusUpdateResult result = requestService.updateEventRequests(USER_ID, EVENT_ID,
                 new EventRequestStatusUpdateRequest(List.of(1L, 2L), "CONFIRMED"));
@@ -70,7 +85,7 @@ class EventRequestServiceTest {
     @Test
     void confirmThrowsWhenLimitAlreadyReached() {
         Event event = event(1);
-        when(eventRepository.findByIdAndInitiatorId(EVENT_ID, USER_ID)).thenReturn(Optional.of(event));
+        when(eventRepository.findByIdForUpdate(EVENT_ID)).thenReturn(Optional.of(event));
         when(requestRepository.findAllByEvent_IdAndIdIn(EVENT_ID, List.of(1L)))
                 .thenReturn(List.of(request(1L, event, RequestStatus.PENDING)));
         when(requestRepository.countByEvent_IdAndStatus(EVENT_ID, RequestStatus.CONFIRMED)).thenReturn(1L);
@@ -82,7 +97,7 @@ class EventRequestServiceTest {
     @Test
     void updateThrowsWhenRequestIsNotPending() {
         Event event = event(0);
-        when(eventRepository.findByIdAndInitiatorId(EVENT_ID, USER_ID)).thenReturn(Optional.of(event));
+        when(eventRepository.findByIdForUpdate(EVENT_ID)).thenReturn(Optional.of(event));
         when(requestRepository.findAllByEvent_IdAndIdIn(EVENT_ID, List.of(1L)))
                 .thenReturn(List.of(request(1L, event, RequestStatus.CONFIRMED)));
 
@@ -92,7 +107,7 @@ class EventRequestServiceTest {
 
     @Test
     void updateThrowsWhenRequestNotFoundForEvent() {
-        when(eventRepository.findByIdAndInitiatorId(EVENT_ID, USER_ID)).thenReturn(Optional.of(event(0)));
+        when(eventRepository.findByIdForUpdate(EVENT_ID)).thenReturn(Optional.of(event(0)));
         when(requestRepository.findAllByEvent_IdAndIdIn(EVENT_ID, List.of(1L))).thenReturn(List.of());
 
         assertThrows(NotFoundException.class, () -> requestService.updateEventRequests(USER_ID, EVENT_ID,
@@ -102,6 +117,7 @@ class EventRequestServiceTest {
     private Event event(int participantLimit) {
         Event event = new Event();
         event.setId(EVENT_ID);
+        event.setInitiator(new User(USER_ID, "initiator", "initiator@mail.ru"));
         event.setRequestModeration(true);
         event.setParticipantLimit(participantLimit);
         return event;

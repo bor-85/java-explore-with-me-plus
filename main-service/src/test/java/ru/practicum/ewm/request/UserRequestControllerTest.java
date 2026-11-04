@@ -31,9 +31,16 @@ import java.util.Optional;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.Mockito.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(UserRequestController.class)
 @Import(UserRequestService.class)
@@ -67,7 +74,7 @@ class UserRequestControllerTest {
                                                  long confirmedRequests, String expectedStatus) throws Exception {
         Event event = event(requestModeration, participantLimit);
         when(userRepository.existsById(1L)).thenReturn(true);
-        when(eventRepository.findById(2L)).thenReturn(Optional.of(event));
+        when(eventRepository.findByIdForUpdate(2L)).thenReturn(Optional.of(event));
         when(userRepository.getReferenceById(1L)).thenReturn(REQUESTER);
         when(requestRepository.countByEvent_IdAndStatus(2L, RequestStatus.CONFIRMED))
                 .thenReturn(confirmedRequests);
@@ -137,7 +144,7 @@ class UserRequestControllerTest {
     @Test
     void createRequestReturns404WhenEventDoesNotExist() throws Exception {
         when(userRepository.existsById(1L)).thenReturn(true);
-        when(eventRepository.findById(999L)).thenReturn(Optional.empty());
+        when(eventRepository.findByIdForUpdate(999L)).thenReturn(Optional.empty());
 
         mockMvc.perform(post("/users/{userId}/requests", 1L).param("eventId", "999"))
                 .andExpect(status().isNotFound())
@@ -152,7 +159,7 @@ class UserRequestControllerTest {
         Event event = event(true, 10);
         event.setInitiator(REQUESTER);
         when(userRepository.existsById(1L)).thenReturn(true);
-        when(eventRepository.findById(2L)).thenReturn(Optional.of(event));
+        when(eventRepository.findByIdForUpdate(2L)).thenReturn(Optional.of(event));
 
         mockMvc.perform(post("/users/{userId}/requests", 1L).param("eventId", "2"))
                 .andExpect(status().isConflict())
@@ -168,7 +175,7 @@ class UserRequestControllerTest {
         Event event = event(true, 10);
         event.setState(state);
         when(userRepository.existsById(1L)).thenReturn(true);
-        when(eventRepository.findById(2L)).thenReturn(Optional.of(event));
+        when(eventRepository.findByIdForUpdate(2L)).thenReturn(Optional.of(event));
 
         mockMvc.perform(post("/users/{userId}/requests", 1L).param("eventId", "2"))
                 .andExpect(status().isConflict())
@@ -182,7 +189,7 @@ class UserRequestControllerTest {
     @Test
     void createRequestReturns409WhenRequestAlreadyExists() throws Exception {
         when(userRepository.existsById(1L)).thenReturn(true);
-        when(eventRepository.findById(2L)).thenReturn(Optional.of(event(true, 10)));
+        when(eventRepository.findByIdForUpdate(2L)).thenReturn(Optional.of(event(true, 10)));
         when(requestRepository.existsByEvent_IdAndRequester_Id(2L, 1L)).thenReturn(true);
 
         mockMvc.perform(post("/users/{userId}/requests", 1L).param("eventId", "2"))
@@ -199,7 +206,7 @@ class UserRequestControllerTest {
     void createRequestReturns409WhenParticipantLimitReached(boolean requestModeration,
                                                             long confirmedRequests) throws Exception {
         when(userRepository.existsById(1L)).thenReturn(true);
-        when(eventRepository.findById(2L)).thenReturn(Optional.of(event(requestModeration, 1)));
+        when(eventRepository.findByIdForUpdate(2L)).thenReturn(Optional.of(event(requestModeration, 1)));
         when(requestRepository.countByEvent_IdAndStatus(2L, RequestStatus.CONFIRMED))
                 .thenReturn(confirmedRequests);
 

@@ -1,8 +1,6 @@
 package ru.practicum.ewm.repository.request;
 
-import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Lock;
 import ru.practicum.ewm.model.request.Request;
 import ru.practicum.ewm.model.request.RequestStatus;
 
@@ -17,7 +15,6 @@ public interface RequestRepository extends JpaRepository<Request, Long> {
 
     Optional<Request> findByIdAndRequester_Id(long requestId, long userId);
 
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
     long countByEvent_IdAndStatus(long eventId, RequestStatus status);
 
     List<Request> findAllByRequester_Id(long userId);
