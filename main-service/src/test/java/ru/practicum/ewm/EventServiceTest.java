@@ -16,10 +16,10 @@ import ru.practicum.ewm.dto.event.UpdateEventUserRequest;
 import ru.practicum.ewm.exception.ConflictException;
 import ru.practicum.ewm.exception.NotFoundException;
 import ru.practicum.ewm.exception.ValidationException;
+import ru.practicum.ewm.model.User;
 import ru.practicum.ewm.model.category.Category;
 import ru.practicum.ewm.model.event.Event;
 import ru.practicum.ewm.model.event.EventState;
-import ru.practicum.ewm.model.User;
 import ru.practicum.ewm.repository.category.CategoryRepository;
 import ru.practicum.ewm.repository.event.EventRepository;
 import ru.practicum.ewm.repository.user.UserRepository;
@@ -34,6 +34,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.tuple;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
@@ -72,6 +73,19 @@ class EventServiceTest {
     }
 
     @Test
+    void getUserEventsReturnsPageInOrderFromRepository() {
+        Event first = event(EventState.PENDING);
+        Event second = event(EventState.PENDING);
+        second.setId(2L);
+        when(eventRepository.findUserEventPageIds(1L, 0, 10)).thenReturn(List.of(2L, 1L));
+        when(eventRepository.findAllWithRelationsByIdIn(any())).thenReturn(List.of(first, second));
+
+        List<EventShortDto> result = eventService.getUserEvents(1L, 0, 10);
+
+        assertThat(result).extracting(EventShortDto::id).containsExactly(2L, 1L);
+    }
+
+    @Test
     void updateUserEventThrowsConflictWhenEventPublished() {
         Event event = event(EventState.PUBLISHED);
         when(eventRepository.findByIdAndInitiatorId(1L, 1L)).thenReturn(Optional.of(event));
@@ -92,9 +106,45 @@ class EventServiceTest {
     }
 
     @Test
+    void getAdminEventsThrowsWhenRangeStartAfterEnd() {
+        assertThatThrownBy(() -> eventService.getAdminEvents(null, null, null,
+                LocalDateTime.now().plusDays(2), LocalDateTime.now().plusDays(1), 0, 10))
+                .isInstanceOf(ValidationException.class);
+        verifyNoInteractions(eventRepository);
+    }
+
+    @Test
+    void getAdminEventsPassesEnabledFiltersAndStateNamesToRepository() {
+        eventService.getAdminEvents(List.of(1L), List.of(EventState.PENDING), null, null, null, 0, 10);
+
+        verify(eventRepository).findAdminEventPageIds(
+                eq(true), eq(List.of(1L)),
+                eq(true), eq(List.of("PENDING")),
+                eq(false), eq(List.of(-1L)),
+                eq(false), any(),
+                eq(false), any(),
+                eq(0), eq(10));
+    }
+
+    @Test
+    void getAdminEventsReturnsPageInOrderFromRepository() {
+        Event first = event(EventState.PENDING);
+        Event second = event(EventState.PENDING);
+        second.setId(2L);
+        when(eventRepository.findAdminEventPageIds(anyBoolean(), anyList(), anyBoolean(), anyList(),
+                anyBoolean(), anyList(), anyBoolean(), any(), anyBoolean(), any(), anyInt(), anyInt()))
+                .thenReturn(List.of(2L, 1L));
+        when(eventRepository.findAllWithRelationsByIdIn(any())).thenReturn(List.of(first, second));
+
+        List<EventFullDto> result = eventService.getAdminEvents(null, null, null, null, null, 0, 10);
+
+        assertThat(result).extracting(EventFullDto::id).containsExactly(2L, 1L);
+    }
+
+    @Test
     void updateAdminEventPublishesPendingEvent() {
         Event event = event(EventState.PENDING);
-        when(eventRepository.findById(1L)).thenReturn(Optional.of(event));
+        when(eventRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(event));
 
         EventFullDto result = eventService.updateAdminEvent(1L, adminRequest("PUBLISH_EVENT"));
 
@@ -103,9 +153,17 @@ class EventServiceTest {
     }
 
     @Test
+    void updateAdminEventThrowsNotFoundWhenEventMissing() {
+        when(eventRepository.findByIdForUpdate(1L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> eventService.updateAdminEvent(1L, adminRequest("PUBLISH_EVENT")))
+                .isInstanceOf(NotFoundException.class);
+    }
+
+    @Test
     void updateAdminEventThrowsConflictWhenPublishingNotPendingEvent() {
         Event event = event(EventState.CANCELED);
-        when(eventRepository.findById(1L)).thenReturn(Optional.of(event));
+        when(eventRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(event));
 
         assertThatThrownBy(() -> eventService.updateAdminEvent(1L, adminRequest("PUBLISH_EVENT")))
                 .isInstanceOf(ConflictException.class);
@@ -115,7 +173,7 @@ class EventServiceTest {
     void updateAdminEventThrowsConflictWhenPublishingLessThanHourBeforeEvent() {
         Event event = event(EventState.PENDING);
         event.setEventDate(LocalDateTime.now().plusMinutes(30));
-        when(eventRepository.findById(1L)).thenReturn(Optional.of(event));
+        when(eventRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(event));
 
         assertThatThrownBy(() -> eventService.updateAdminEvent(1L, adminRequest("PUBLISH_EVENT")))
                 .isInstanceOf(ConflictException.class);
@@ -124,7 +182,7 @@ class EventServiceTest {
     @Test
     void updateAdminEventThrowsConflictWhenRejectingPublishedEvent() {
         Event event = event(EventState.PUBLISHED);
-        when(eventRepository.findById(1L)).thenReturn(Optional.of(event));
+        when(eventRepository.findByIdForUpdate(1L)).thenReturn(Optional.of(event));
 
         assertThatThrownBy(() -> eventService.updateAdminEvent(1L, adminRequest("REJECT_EVENT")))
                 .isInstanceOf(ConflictException.class);
@@ -142,8 +200,6 @@ class EventServiceTest {
     void getPublicEventsSortsByViewsAndAsksRepositoryForAvailableEventsOnly() {
         Event first = publishedEvent(1L, 0);
         Event second = publishedEvent(2L, 0);
-        // Событие без свободных мест отсекается в БД (onlyAvailable = true),
-        // поэтому в списке кандидатов его нет.
         when(eventRepository.findPublishedIdsForViewSort(any(), anyBoolean(), any(), anyBoolean(),
                 anyBoolean(), anyBoolean(), any(), any(), anyBoolean(), eq(true)))
                 .thenReturn(List.of(1L, 2L));
@@ -163,6 +219,26 @@ class EventServiceTest {
                 .containsExactly(tuple(2L, 10L, 4L), tuple(1L, 5L, 2L));
         verify(eventRepository).findPublishedIdsForViewSort(any(), anyBoolean(), any(), anyBoolean(),
                 anyBoolean(), anyBoolean(), any(), any(), anyBoolean(), eq(true));
+    }
+
+    @Test
+    void getPublicEventsSortedByViewsAppliesFromAndSizeToSortedCandidates() {
+        Event third = publishedEvent(3L, 0);
+        when(eventRepository.findPublishedIdsForViewSort(any(), anyBoolean(), any(), anyBoolean(),
+                anyBoolean(), anyBoolean(), any(), any(), anyBoolean(), eq(false)))
+                .thenReturn(List.of(1L, 2L, 3L));
+        when(statClient.getStats(any(), any(), anyList(), anyBoolean())).thenReturn(List.of(
+                new ViewStatsDto("ewm-main-service", "/events/1", 5L),
+                new ViewStatsDto("ewm-main-service", "/events/2", 10L),
+                new ViewStatsDto("ewm-main-service", "/events/3", 7L)));
+        when(eventRepository.findAllWithRelationsByIdIn(any())).thenReturn(List.of(third));
+
+        List<EventShortDto> result = eventService.getPublicEvents(null, null, null, null, null,
+                false, "VIEWS", 1, 1);
+
+        assertThat(result)
+                .extracting(EventShortDto::id, EventShortDto::views)
+                .containsExactly(tuple(3L, 7L));
     }
 
     @Test

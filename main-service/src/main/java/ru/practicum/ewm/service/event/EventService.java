@@ -25,6 +25,7 @@ import ru.practicum.ewm.repository.event.EventRepository;
 import ru.practicum.ewm.repository.user.UserRepository;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
@@ -40,7 +41,9 @@ public class EventService {
     private static final long MIN_HOURS_BEFORE_PUBLICATION = 1;
     private static final LocalDateTime STATS_START = LocalDateTime.of(2000, 1, 1, 0, 0);
     private static final String EVENT_URI_PREFIX = "/events/";
+    private static final long NO_USER_SENTINEL = -1L;
     private static final long NO_CATEGORY_SENTINEL = -1L;
+    private static final String NO_STATE_SENTINEL = "";
 
     private final EventRepository eventRepository;
     private final UserRepository userRepository;
@@ -61,7 +64,8 @@ public class EventService {
     }
 
     public List<EventShortDto> getUserEvents(Long userId, int from, int size) {
-        return toShortDtos(eventRepository.findAllByInitiatorId(userId, from, size));
+        List<Long> pageIds = eventRepository.findUserEventPageIds(userId, from, size);
+        return toShortDtos(loadEventsInOrder(pageIds));
     }
 
     public EventFullDto getUserEvent(Long userId, Long eventId) {
@@ -97,8 +101,29 @@ public class EventService {
             throw new ValidationException(ErrorMessages.RANGE_START_AFTER_END);
         }
 
-        return toFullDtos(eventRepository.findAllByAdminFilters(
-                users, states, categories, rangeStart, rangeEnd, from, size));
+        boolean filterUsers = hasValues(users);
+        boolean filterStates = hasValues(states);
+        boolean filterCategories = hasValues(categories);
+        boolean filterRangeStart = rangeStart != null;
+        boolean filterRangeEnd = rangeEnd != null;
+
+        // Значения-заглушки не используются, когда соответствующий флаг выключен
+        List<Long> pageIds = eventRepository.findAdminEventPageIds(
+                filterUsers,
+                filterUsers ? users : List.of(NO_USER_SENTINEL),
+                filterStates,
+                filterStates ? toStateNames(states) : List.of(NO_STATE_SENTINEL),
+                filterCategories,
+                filterCategories ? categories : List.of(NO_CATEGORY_SENTINEL),
+                filterRangeStart,
+                filterRangeStart ? rangeStart : LocalDateTime.now(),
+                filterRangeEnd,
+                filterRangeEnd ? rangeEnd : LocalDateTime.now(),
+                from,
+                size
+        );
+
+        return toFullDtos(loadEventsInOrder(pageIds));
     }
 
     public List<EventShortDto> getPublicEvents(String text, List<Long> categories, Boolean paid,
@@ -131,7 +156,7 @@ public class EventService {
 
     @Transactional
     public EventFullDto updateAdminEvent(Long eventId, UpdateEventAdminRequest dto) {
-        Event event = eventRepository.findById(eventId)
+        Event event = eventRepository.findByIdForUpdate(eventId)
                 .orElseThrow(() -> new NotFoundException(
                         ErrorMessages.EVENT_NOT_FOUND.formatted(eventId)));
 
@@ -205,7 +230,7 @@ public class EventService {
                                               LocalDateTime rangeStart, LocalDateTime rangeEnd,
                                               boolean onlyAvailable, int from, int size) {
         boolean filterText = text != null;
-        boolean filterCategories = categories != null && !categories.isEmpty();
+        boolean filterCategories = hasValues(categories);
         boolean filterPaid = paid != null;
         boolean filterRangeEnd = rangeEnd != null;
 
@@ -229,7 +254,7 @@ public class EventService {
                                                      LocalDateTime rangeStart, LocalDateTime rangeEnd,
                                                      boolean onlyAvailable) {
         boolean filterText = text != null;
-        boolean filterCategories = categories != null && !categories.isEmpty();
+        boolean filterCategories = hasValues(categories);
         boolean filterPaid = paid != null;
         boolean filterRangeEnd = rangeEnd != null;
 
@@ -245,10 +270,6 @@ public class EventService {
                 filterRangeEnd,
                 onlyAvailable
         );
-    }
-
-    private String toTextPattern(String text) {
-        return "%" + text.toLowerCase(Locale.ROOT) + "%";
     }
 
     private List<Event> loadEventsInOrder(List<Long> eventIds) {
@@ -398,5 +419,17 @@ public class EventService {
             throw new ValidationException(
                     ErrorMessages.EVENT_DATE_TOO_EARLY.formatted(minHours, eventDate));
         }
+    }
+
+    private String toTextPattern(String text) {
+        return "%" + text.toLowerCase(Locale.ROOT) + "%";
+    }
+
+    private List<String> toStateNames(List<EventState> states) {
+        return states.stream().map(EventState::name).toList();
+    }
+
+    private static boolean hasValues(Collection<?> values) {
+        return values != null && !values.isEmpty();
     }
 }

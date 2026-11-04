@@ -1,6 +1,7 @@
 package ru.practicum.ewm.repository.event;
 
 import jakarta.persistence.LockModeType;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
@@ -15,40 +16,50 @@ import java.util.Optional;
 
 public interface EventRepository extends JpaRepository<Event, Long> {
 
-    @Query("""
-            SELECT e FROM Event e
-            JOIN FETCH e.category
-            JOIN FETCH e.initiator
-            WHERE e.initiator.id = :userId
-            ORDER BY e.id
+    /**
+     * Страница id событий пользователя. Сами события грузятся отдельно,
+     * через findAllWithRelationsByIdIn.
+     */
+    @Query(value = """
+            SELECT e.id
+            FROM events e
+            WHERE e.initiator_id = :userId
+            ORDER BY e.id ASC
             LIMIT :size OFFSET :from
-            """)
-    List<Event> findAllByInitiatorId(@Param("userId") Long userId,
+            """, nativeQuery = true)
+    List<Long> findUserEventPageIds(@Param("userId") long userId,
+                                    @Param("from") int from,
+                                    @Param("size") int size);
+
+    /**
+     * Страница id событий для админки. Флаг FALSE означает, что фильтр не применяется.
+     */
+    @Query(value = """
+            SELECT e.id
+            FROM events e
+            WHERE (:filterUsers = FALSE OR e.initiator_id IN (:users))
+              AND (:filterStates = FALSE OR e.state IN (:states))
+              AND (:filterCategories = FALSE OR e.category_id IN (:categories))
+              AND (:filterRangeStart = FALSE OR e.event_date >= :rangeStart)
+              AND (:filterRangeEnd = FALSE OR e.event_date <= :rangeEnd)
+            ORDER BY e.id ASC
+            LIMIT :size OFFSET :from
+            """, nativeQuery = true)
+    List<Long> findAdminEventPageIds(@Param("filterUsers") boolean filterUsers,
+                                     @Param("users") List<Long> users,
+                                     @Param("filterStates") boolean filterStates,
+                                     @Param("states") List<String> states,
+                                     @Param("filterCategories") boolean filterCategories,
+                                     @Param("categories") List<Long> categories,
+                                     @Param("filterRangeStart") boolean filterRangeStart,
+                                     @Param("rangeStart") LocalDateTime rangeStart,
+                                     @Param("filterRangeEnd") boolean filterRangeEnd,
+                                     @Param("rangeEnd") LocalDateTime rangeEnd,
                                      @Param("from") int from,
                                      @Param("size") int size);
 
-    @Query("""
-            SELECT e FROM Event e
-            JOIN FETCH e.category
-            JOIN FETCH e.initiator
-            WHERE (:users IS NULL OR e.initiator.id IN :users)
-            AND (:states IS NULL OR e.state IN :states)
-            AND (:categories IS NULL OR e.category.id IN :categories)
-            AND (CAST(:rangeStart AS timestamp) IS NULL OR e.eventDate >= :rangeStart)
-            AND (CAST(:rangeEnd AS timestamp) IS NULL OR e.eventDate <= :rangeEnd)
-            ORDER BY e.id
-            LIMIT :size OFFSET :from
-            """)
-    List<Event> findAllByAdminFilters(@Param("users") List<Long> users,
-                                      @Param("states") List<EventState> states,
-                                      @Param("categories") List<Long> categories,
-                                      @Param("rangeStart") LocalDateTime rangeStart,
-                                      @Param("rangeEnd") LocalDateTime rangeEnd,
-                                      @Param("from") int from,
-                                      @Param("size") int size);
-
     /**
-     * Страница опубликованных событий, отсортированная по дате.
+     * Страница id опубликованных событий, отсортированная по дате.
      * Фильтры, доступность и пагинация выполняются в БД.
      */
     @Query(value = """
@@ -99,6 +110,10 @@ public interface EventRepository extends JpaRepository<Event, Long> {
                                     @Param("from") int from,
                                     @Param("size") int size);
 
+    /**
+     * Все id опубликованных событий, подходящих под фильтры, для сортировки по просмотрам.
+     * Пагинация делается в сервисе после подсчёта просмотров.
+     */
     @Query(value = """
             SELECT e.id
             FROM events e
@@ -144,6 +159,10 @@ public interface EventRepository extends JpaRepository<Event, Long> {
                                            @Param("filterRangeEnd") boolean filterRangeEnd,
                                            @Param("onlyAvailable") boolean onlyAvailable);
 
+    /**
+     * Единственное место, где грузятся события для списков.
+     * category и initiator приходят в одном запросе, порядок задаёт сервис.
+     */
     @Query("""
             SELECT e FROM Event e
             JOIN FETCH e.category
@@ -152,9 +171,14 @@ public interface EventRepository extends JpaRepository<Event, Long> {
             """)
     List<Event> findAllWithRelationsByIdIn(@Param("eventIds") Collection<Long> eventIds);
 
+    @EntityGraph(attributePaths = {"category", "initiator"})
     Optional<Event> findByIdAndState(Long id, EventState state);
 
+    @EntityGraph(attributePaths = {"category", "initiator"})
     Optional<Event> findByIdAndInitiatorId(Long id, Long initiatorId);
+
+    @EntityGraph(attributePaths = {"category", "initiator"})
+    Optional<Event> findWithRelationsById(Long id);
 
     @Query(value = """
             SELECT event_id, COUNT(*)
@@ -166,6 +190,7 @@ public interface EventRepository extends JpaRepository<Event, Long> {
     List<Object[]> countConfirmedRequests(@Param("eventIds") Collection<Long> eventIds);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @EntityGraph(attributePaths = {"category", "initiator"})
     @Query("SELECT e FROM Event e WHERE e.id = :eventId")
     Optional<Event> findByIdForUpdate(@Param("eventId") long eventId);
 
