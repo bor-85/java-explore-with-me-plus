@@ -210,8 +210,16 @@ class CommentServiceTest {
     }
 
     @Test
-    void getCommentThrowsNotFoundWhenMissing() {
-        when(commentRepository.findWithAuthorById(10L))
+    void getCommentReturnsCommentOfPublishedEvent() {
+        when(commentRepository.findByIdAndEvent_State(10L, EventState.PUBLISHED))
+                .thenReturn(Optional.of(buildComment(10L, buildUser(2L))));
+
+        assertEquals(10L, commentService.getComment(10L).id());
+    }
+
+    @Test
+    void getCommentThrowsNotFoundWhenMissingOrEventNotPublished() {
+        when(commentRepository.findByIdAndEvent_State(10L, EventState.PUBLISHED))
                 .thenReturn(Optional.empty());
 
         assertThrows(NotFoundException.class, () -> commentService.getComment(10L));
@@ -219,22 +227,24 @@ class CommentServiceTest {
 
     @Test
     void deleteCommentDeletesExistingComment() {
-        when(commentRepository.existsById(10L))
-                .thenReturn(true);
+        Comment comment = buildComment(10L, buildUser(2L));
+
+        when(commentRepository.findById(10L))
+                .thenReturn(Optional.of(comment));
 
         commentService.deleteComment(10L);
 
-        verify(commentRepository).deleteById(10L);
+        verify(commentRepository).delete(comment);
     }
 
     @Test
     void deleteCommentThrowsNotFoundWhenMissing() {
-        when(commentRepository.existsById(10L))
-                .thenReturn(false);
+        when(commentRepository.findById(10L))
+                .thenReturn(Optional.empty());
 
         assertThrows(NotFoundException.class, () -> commentService.deleteComment(10L));
 
-        verify(commentRepository, never()).deleteById(anyLong());
+        verify(commentRepository, never()).delete(any());
     }
 
     private User buildUser(Long id) {

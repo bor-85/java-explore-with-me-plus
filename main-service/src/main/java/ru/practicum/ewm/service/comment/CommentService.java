@@ -77,17 +77,16 @@ public class CommentService {
     }
 
     public CommentDto getComment(Long commentId) {
-        return commentRepository.findWithAuthorById(commentId)
+        return commentRepository.findByIdAndEvent_State(commentId, EventState.PUBLISHED)
                 .map(CommentMapper::toDto)
                 .orElseThrow(() -> new NotFoundException(ErrorMessages.COMMENT_NOT_FOUND.formatted(commentId)));
     }
 
     @Transactional
     public void deleteComment(Long commentId) {
-        if (!commentRepository.existsById(commentId)) {
-            throw new NotFoundException(ErrorMessages.COMMENT_NOT_FOUND.formatted(commentId));
-        }
-        commentRepository.deleteById(commentId);
+        Comment comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new NotFoundException(ErrorMessages.COMMENT_NOT_FOUND.formatted(commentId)));
+        commentRepository.delete(comment);
     }
 
     private Comment getAuthorComment(Long userId, Long commentId) {
