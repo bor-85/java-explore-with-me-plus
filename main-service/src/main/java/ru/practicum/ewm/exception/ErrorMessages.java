@@ -24,6 +24,8 @@ public final class ErrorMessages {
     public static final String COMPILATION_NOT_FOUND = "Compilation with id=%d was not found";
     public static final String COMPILATION_ALREADY_EXISTS = "Compilation with title '%s' already exists";
 
+    public static final String COMMENT_NOT_FOUND = "Comment with id=%d was not found";
+
     private ErrorMessages() {
     }
 }
